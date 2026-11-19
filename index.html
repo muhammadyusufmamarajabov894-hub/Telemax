@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TELEMAX</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1520;color:white;font-family:Arial,sans-serif}
+header{height:68px;background:#142536;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #26394b;position:sticky;top:0;z-index:3}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{font-size:25px;font-weight:bold;color:#38bdf8}
+.premium{font-size:11px;color:#fbbf24}
+.page{padding:18px;max-width:650px;margin:auto}
+.hidden{display:none!important}
+button{border:0;border-radius:11px;padding:12px 17px;background:#38bdf8;color:#071722;font-weight:bold;cursor:pointer}
+.secondary{background:#263e50;color:white}
+button:disabled{opacity:.5}
+input{width:100%;padding:14px;margin:7px 0;border:1px solid #31475a;border-radius:11px;background:#1a2b3b;color:white;font-size:15px;outline:none}
+input:focus{border-color:#38bdf8}
+.authbox{margin-top:35px;background:#142536;padding:22px;border-radius:20px;border:1px solid #26394b}
+.authbox button{width:100%;margin-top:10px}
+#status,#homeStatus{font-size:13px;color:#fbbf24;overflow-wrap:anywhere}
+.menu-btn{background:transparent;color:white;font-size:24px;padding:8px}
+.top-search{position:sticky;top:68px;z-index:2;background:#0b1520;padding:12px 0 5px}
+.search-box{display:flex;align-items:center;gap:10px;background:#172b3b;border:1px solid #31475a;border-radius:14px;padding:0 14px}
+.search-box input{border:0;background:transparent;margin:0;padding:15px 0}
+.search-icon{font-size:20px;color:#8ba1b3}
+.avatar{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:bold;flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.section-title{color:#9bb0c0;font-size:13px;margin-top:25px}
+.user{display:flex;align-items:center;gap:12px;padding:13px;background:#172b3b;border:1px solid #263e50;border-radius:15px;margin:9px 0;cursor:pointer}
+.userinfo{flex:1;min-width:0}
+.userinfo b{display:block;margin-bottom:5px}
+.userinfo small{color:#9bb0c0;overflow-wrap:anywhere}
+.empty{text-align:center;color:#8ba1b3;padding:25px}
+.chat-preview{color:#9bb0c0;font-size:13px;display:block;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-time{color:#8ba1b3;font-size:11px;white-space:nowrap}
+.chat-row{display:flex;align-items:center;gap:12px;padding:13px;background:#172b3b;border:1px solid #263e50;border-radius:15px;margin:9px 0;cursor:pointer}
+.chat-row:active,.user:active{background:#20394e}
+.chat-row .userinfo{flex:1}
+.chat-row .userinfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-row .chat-preview{max-width:100%}
+.overlay{position:fixed;inset:0;background:#0009;z-index:10;display:flex;align-items:flex-end}
+.sheet{width:100%;background:#142536;border:1px solid #263e50;border-radius:26px 26px 0 0;padding:15px 18px 25px;max-height:88dvh;overflow-y:auto}
+.handle{width:55px;height:5px;border-radius:10px;background:#647b90;margin:0 auto 20px}
+.profile-summary{display:flex;align-items:center;gap:15px;padding:10px 5px 20px;border-bottom:1px solid #31475a;margin-bottom:14px}
+.profile-summary .avatar{width:76px;height:76px;font-size:30px}
+.profile-info{flex:1;min-width:0}
+.profile-info b{font-size:21px}
+.profile-info small{display:block;color:#9bb0c0;margin-top:7px;overflow-wrap:anywhere}
+.online{color:#38d989;font-size:13px;margin-top:8px}
+.menu-item{display:flex;align-items:center;gap:17px;width:100%;padding:17px 16px;margin:7px 0;border-radius:16px;background:#1b3044;color:white;font-size:16px;font-weight:normal;text-align:left}
+.menu-item span{font-size:21px;width:28px;text-align:center}
+.menu-item.logout{color:#ff6464}
+.cancel-btn{width:100%;margin-top:13px;padding:16px;background:#20374e;color:white;font-size:16px}
+.edit-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.edit-heading h2{font-size:20px;margin:0}
+.close-btn{background:transparent;color:white;font-size:23px;padding:5px}
+.edit-avatar{display:flex;justify-content:center;margin:15px 0 22px}
+.edit-avatar .avatar{width:105px;height:105px;font-size:38px}
+.edit-label{font-size:13px;color:#9bb0c0}
+.edit-actions{display:grid;gap:10px;margin-top:15px}
+.edit-actions button{width:100%;padding:15px}
+#photoInput{display:none}
+#profileStatus{font-size:13px;color:#38bdf8;overflow-wrap:anywhere}
+#chatPage{position:fixed;inset:0;background:#0b1520;z-index:5}
+.chathead{height:68px;background:#142536;padding:10px 14px;display:flex;align-items:center;gap:12px}
+.chatperson{display:flex;align-items:center;gap:10px}
+.chatperson .avatar{width:42px;height:42px}
+.chatperson small{display:block;color:#38bdf8;margin-top:4px}
+#messages{height:calc(100dvh - 143px);overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}
+.msg{background:#203649;padding:11px 14px;border-radius:15px 15px 15px 4px;max-width:82%;overflow-wrap:anywhere;align-self:flex-start}
+.mine{background:#087eaa;align-self:flex-end;border-radius:15px 15px 4px 15px}
+.msgtime{display:block;text-align:right;font-size:10px;color:#c5dce9;margin-top:6px}
+.send{position:absolute;bottom:0;width:100%;min-height:75px;padding:10px;background:#142536;display:flex;gap:8px;align-items:center}
+.send input{flex:1;min-width:0;margin:0}
+.send button{font-size:20px;padding:12px 17px}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="header-left">
+  <button class="menu-btn" onclick="openProfileMenu()">☰</button>
+  <div class="logo">TELEMAX</div>
+ </div>
+ <div class="premium">✦ PREMIUM</div>
+</header>
+
+<div id="authPage" class="page">
+ <div class="authbox">
+  <h2>Welcome to TELEMAX</h2>
+  <p style="color:#9bb0c0">Connect with people around you.</p>
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button id="registerBtn" onclick="register()">CREATE ACCOUNT</button>
+  <button id="loginBtn" class="secondary" onclick="login()">SIGN IN</button>
+  <p id="status"></p>
+ </div>
+</div>
+
+<div id="homePage" class="page hidden">
+ <p id="homeStatus"></p>
+ <div class="top-search">
+  <div class="search-box">
+   <span class="search-icon">⌕</span>
+   <input id="search" placeholder="Search people..." oninput="filterUsers()">
+  </div>
+ </div>
+ <h2>Your messages</h2>
+ <div id="chatList"><div class="empty">Loading chats...</div></div>
+ <p class="section-title">ALL USERS</p>
+ <div id="users">Loading users...</div>
+</div>
+
+<div id="profileOverlay" class="overlay hidden" onclick="overlayClose(event)">
+ <div class="sheet" onclick="event.stopPropagation()">
+  <div class="handle"></div>
+  <div class="profile-summary">
+   <div class="avatar" id="menuAvatar">T</div>
+   <div class="profile-info">
+    <b id="menuName">User</b>
+    <small id="menuEmail"></small>
+    <div class="online">● Online</div>
+   </div>
+   <button class="menu-btn" onclick="openEditProfile()">›</button>
+  </div>
+  <button class="menu-item" onclick="openEditProfile()"><span>✎</span> Edit Profile</button>
+  <button class="menu-item" onclick="choosePhoto()"><span>▧</span> Change Photo</button>
+  <button class="menu-item" onclick="openSettings()"><span>⚙</span> Settings</button>
+  <button class="menu-item logout" onclick="logout()"><span>⇥</span> Log Out</button>
+  <button class="cancel-btn" onclick="closeProfileMenu()">Cancel</button>
+ </div>
+</div>
+
+<div id="editOverlay" class="overlay hidden" onclick="editOverlayClose(event)">
+ <div class="sheet" onclick="event.stopPropagation()">
+  <div class="handle"></div>
+  <div class="edit-heading">
+   <button class="close-btn" onclick="closeEditProfile()">←</button>
+   <h2>Edit Profile</h2>
+   <div style="width:30px"></div>
+  </div>
+  <div class="edit-avatar"><div class="avatar" id="editAvatar">T</div></div>
+  <label class="edit-label">YOUR NAME</label>
+  <input id="newName" placeholder="Your new name" maxlength="40">
+  <div class="edit-actions">
+   <button onclick="updateProfile()">SAVE CHANGES</button>
+   <button class="secondary" onclick="choosePhoto()">CHANGE PHOTO</button>
+  </div>
+  <p id="profileStatus"></p>
+ </div>
+</div>
+
+<div id="settingsOverlay" class="overlay hidden" onclick="settingsOverlayClose(event)">
+ <div class="sheet" onclick="event.stopPropagation()">
+  <div class="handle"></div>
+  <div class="edit-heading">
+   <button class="close-btn" onclick="closeSettings()">←</button>
+   <h2>Settings</h2>
+   <div style="width:30px"></div>
+  </div>
+  <div class="menu-item">
+   <span>👤</span>
+   <div>Account<div id="settingsEmail" style="font-size:12px;color:#9bb0c0;margin-top:5px"></div></div>
+  </div>
+  <div class="menu-item">
+   <span>ℹ</span>
+   <div>About TELEMAX<div style="font-size:12px;color:#9bb0c0;margin-top:5px">Version 1.0</div></div>
+  </div>
+  <button class="cancel-btn" onclick="closeSettings()">Close</button>
+ </div>
+</div>
+
+<input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadPhoto(event)">
+
+<div id="chatPage" class="hidden">
+ <div class="chathead">
+  <button onclick="closeChat()">←</button>
+  <div class="chatperson">
+   <div class="avatar" id="friendAvatar">U</div>
+   <div><b id="friendName">Chat</b><small>TELEMAX user</small></div>
+  </div>
+ </div>
+ <div id="messages"></div>
+ <div class="send">
+  <input id="message" placeholder="Write a message..." autocomplete="off" onkeydown="if(event.key==='Enter')sendMessage()">
+  <button onclick="sendMessage()">➤</button>
+ </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
+<script>
+"use strict";
+
+// CLOUDINARY
+var CLOUDINARY_CLOUD_NAME="ohce4wop";
+var CLOUDINARY_UPLOAD_PRESET="telemax_unsigned";
+
+// FIREBASE CONFIG
+var firebaseConfig={
+ apiKey:"AIzaSyBpUaZtGdBF43IgYy3BJL9TcD5zzoDCdqM",
+ authDomain:"telemax-b6a9a.firebaseapp.com",
+ databaseURL:"https://telemax-b6a9a-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"telemax-b6a9a",
+ messagingSenderId:"746634996399",
+ appId:"1:746634996399:web:c2959fc11f6760d4cb425a",
+ measurementId:"G-K2DDBNPQBG"
+};
+
+if(!firebase.apps.length){
+ firebase.initializeApp(firebaseConfig);
+}
+
+var auth=firebase.auth();
+var db=firebase.firestore();
+var rtdb=firebase.database();
+
+var currentUser=null;
+var activeChat=null;
+var unsubscribeMessages=null;
+var allUsers=[];
+var myProfile={};
+var chatListeners={};
+var latestChats={};
+var authReady=false;
+var authBusy=false;
+var authStateVersion=0;
+
+var persistenceReady=auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+.then(function(){
+ authReady=true;
+})
+.catch(function(error){
+ console.error("PERSISTENCE ERROR:",error);
+ authReady=true;
+});
+
+function getInitial(name){
+ return (name||"U").trim().charAt(0).toUpperCase()||"U";
+}
+
+function setStatus(id,message){
+ var el=document.getElementById(id);
+ if(el)el.textContent=message;
+}
+
+function errorMessage(error){
+ var codes={
+  "auth/invalid-email":"Email manzili noto‘g‘ri.",
+  "auth/user-not-found":"Bunday akkaunt topilmadi.",
+  "auth/wrong-password":"Parol noto‘g‘ri.",
+  "auth/invalid-credential":"Email yoki parol noto‘g‘ri.",
+  "auth/email-already-in-use":"Bu email allaqachon ro‘yxatdan o‘tgan.",
+  "auth/weak-password":"Parol kamida 6 ta belgi bo‘lsin.",
+  "auth/network-request-failed":"Internet aloqasini tekshiring.",
+  "auth/too-many-requests":"Keyinroq qayta urinib ko‘ring.",
+  "permission-denied":"Firebase Rules ruxsat bermayapti.",
+  "unavailable":"Firebase serveriga ulanib bo‘lmadi."
+ };
+ return codes[error.code]||error.message||"Noma’lum xatolik.";
+}
+
+function setAuthBusy(busy){
+ authBusy=busy;
+ document.getElementById("registerBtn").disabled=busy;
+ document.getElementById("loginBtn").disabled=busy;
+}
+
+function withTimeout(promise,milliseconds,label){
+ var timer;
+ var timeout=new Promise(function(resolve,reject){
+  timer=setTimeout(function(){
+   reject(new Error(label+" vaqti tugadi. Internet va Firebase Rules'ni tekshiring."));
+  },milliseconds);
+ });
+ return Promise.race([promise,timeout]).finally(function(){
+  clearTimeout(timer);
+ });
+}
+
+function showAvatar(elementId,name,photoURL){
+ var el=document.getElementById(elementId);
+ if(!el)return;
+
+ if(photoURL){
+  var img=document.createElement("img");
+  img.src=photoURL;
+  img.alt="Profile";
+  img.onerror=function(){el.textContent=getInitial(name);};
+  el.replaceChildren(img);
+ }else{
+  el.textContent=getInitial(name);
+ }
+}
+
+// CREATE OR UPDATE USER PROFILE
+async function saveUserProfile(user,name){
+ if(!user)throw new Error("Foydalanuvchi aniqlanmadi.");
+
+ var profile={
+  uid:user.uid,
+  email:user.email||"",
+  name:name||((user.email||"User").split("@")[0]),
+  photoURL:"",
+  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+ };
+
+ await withTimeout(
+  db.collection("users").doc(user.uid).set(profile,{merge:true}),
+  15000,
+  "Profilni saqlash"
+ );
+
+ return profile;
+}
+
+// REGISTER
+async function register(){
+ if(authBusy)return;
+
+ var email=document.getElementById("email").value.trim();
+ var password=document.getElementById("password").value;
+
+ if(!email||password.length<6){
+  setStatus("status","Email kiriting. Parol kamida 6 ta belgi bo‘lsin.");
+  return;
+ }
+
+ setAuthBusy(true);
+ setStatus("status","Account yaratilmoqda...");
+
+ try{
+  await persistenceReady;
+
+  var result=await withTimeout(
+   auth.createUserWithEmailAndPassword(email,password),
+   20000,
+   "Account yaratish"
+  );
+
+  var user=result.user;
+  var name=email.split("@")[0];
+
+  setStatus("status","Account yaratildi. Profil saqlanmoqda...");
+
+  try{
+   await saveUserProfile(user,name);
+   myProfile={uid:user.uid,email:user.email,name:name,photoURL:""};
+   setStatus("status","Account muvaffaqiyatli yaratildi!");
+  }catch(profileError){
+   console.error("PROFILE SAVE ERROR:",profileError);
+   setStatus("status","Account yaratildi, lekin profil saqlanmadi: "+errorMessage(profileError));
+   setStatus("homeStatus","Profil saqlash xatosi: "+errorMessage(profileError));
+  }
+
+ }catch(e){
+  console.error("REGISTER ERROR:",e);
+
+  if(auth.currentUser){
+   setStatus("homeStatus","Account yaratishdagi xatolik: "+errorMessage(e));
+  }else{
+   setStatus("status",errorMessage(e));
+  }
+ }finally{
+  setAuthBusy(false);
+ }
+}
+
+// LOGIN
+async function login(){
+ if(authBusy)return;
+
+ var email=document.getElementById("email").value.trim();
+ var password=document.getElementById("password").value;
+
+ if(!email||!password){
+  setStatus("status","Email va parolni kiriting.");
+  return;
+ }
+
+ setAuthBusy(true);
+ setStatus("status","Akkauntga kirilmoqda...");
+
+ try{
+  await persistenceReady;
+
+  await withTimeout(
+   auth.signInWithEmailAndPassword(email,password),
+   20000,
+   "Login"
+  );
+
+  setStatus("status","Kirish muvaffaqiyatli!");
+ }catch(e){
+  console.error("LOGIN ERROR:",e);
+  setStatus("status",errorMessage(e));
+ }finally{
+  setAuthBusy(false);
+ }
+}
+
+// AUTH STATE
+auth.onAuthStateChanged(async function(user){
+ var version=++authStateVersion;
+ currentUser=user;
+
+ stopChatListListeners();
+
+ if(unsubscribeMessages){
+  unsubscribeMessages();
+  unsubscribeMessages=null;
+ }
+
+ activeChat=null;
+
+ document.getElementById("authPage").classList.toggle("hidden",!!user);
+ document.getElementById("homePage").classList.toggle("hidden",!user);
+ document.getElementById("chatPage").classList.add("hidden");
+
+ if(!user){
+  myProfile={};
+  allUsers=[];
+  latestChats={};
+  setStatus("homeStatus","");
+  return;
+ }
+
+ setStatus("homeStatus","Profil yuklanmoqda...");
+
+ try{
+  await loadMyProfile();
+
+  if(version!==authStateVersion)return;
+
+  await loadUsers();
+
+  if(version!==authStateVersion)return;
+
+  startChatListListeners();
+  setStatus("homeStatus","");
+ }catch(e){
+  console.error("USER LOAD ERROR:",e);
+  if(version===authStateVersion){
+   setStatus("homeStatus","Ma’lumot yuklanmadi: "+errorMessage(e));
+  }
+ }
+});
+
+// LOAD MY PROFILE
+async function loadMyProfile(){
+ if(!currentUser)return;
+
+ var ref=db.collection("users").doc(currentUser.uid);
+ var doc=await withTimeout(ref.get(),15000,"Profilni yuklash");
+
+ if(!doc.exists){
+  var name=(currentUser.email||"User").split("@")[0];
+
+  await saveUserProfile(currentUser,name);
+
+  myProfile={
+   uid:currentUser.uid,
+   email:currentUser.email||"",
+   name:name,
+   photoURL:""
+  };
+ }else{
+  myProfile=doc.data()||{};
+ }
+
+ updateProfileDisplays();
+}
+
+// PROFILE MENU
+function openProfileMenu(){
+ if(!currentUser)return;
+ updateProfileDisplays();
+ document.getElementById("profileOverlay").classList.remove("hidden");
+}
+
+function closeProfileMenu(){
+ document.getElementById("profileOverlay").classList.add("hidden");
+}
+
+function overlayClose(event){
+ if(event.target.id==="profileOverlay")closeProfileMenu();
+}
+
+function updateProfileDisplays(){
+ if(!currentUser)return;
+
+ var name=myProfile.name||(currentUser.email||"User").split("@")[0];
+ var photo=myProfile.photoURL||"";
+
+ document.getElementById("menuName").textContent=name;
+ document.getElementById("menuEmail").textContent=currentUser.email||"";
+
+ showAvatar("menuAvatar",name,photo);
+ showAvatar("editAvatar",name,photo);
+}
+
+// EDIT PROFILE
+function openEditProfile(){
+ closeProfileMenu();
+ document.getElementById("newName").value=myProfile.name||"";
+ setStatus("profileStatus","");
+ updateProfileDisplays();
+ document.getElementById("editOverlay").classList.remove("hidden");
+}
+
+function closeEditProfile(){
+ document.getElementById("editOverlay").classList.add("hidden");
+}
+
+function editOverlayClose(event){
+ if(event.target.id==="editOverlay")closeEditProfile();
+}
+
+// SAVE NAME
+async function updateProfile(){
+ if(!currentUser)return;
+
+ var name=document.getElementById("newName").value.trim();
+
+ if(name.length<2){
+  setStatus("profileStatus","Ism kamida 2 ta belgi bo‘lsin.");
+  return;
+ }
+
+ var button=document.querySelector("#editOverlay .edit-actions button");
+ button.disabled=true;
+ setStatus("profileStatus","Saqlanmoqda...");
+
+ try{
+  await withTimeout(
+   db.collection("users").doc(currentUser.uid).set({name:name},{merge:true}),
+   15000,
+   "Ismni saqlash"
+  );
+
+  myProfile.name=name;
+  updateProfileDisplays();
+  await loadUsers();
+  setStatus("profileStatus","Ism muvaffaqiyatli o‘zgartirildi!");
+ }catch(e){
+  console.error(e);
+  setStatus("profileStatus","Xatolik: "+errorMessage(e));
+ }finally{
+  button.disabled=false;
+ }
+}
+
+// CHANGE PHOTO
+function choosePhoto(){
+ if(!currentUser)return;
+ document.getElementById("photoInput").click();
+}
+
+// UPLOAD PHOTO
+async function uploadPhoto(event){
+ if(!currentUser)return;
+
+ var file=event.target.files[0];
+ if(!file)return;
+
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
+  setStatus("profileStatus","Faqat JPG, PNG yoki WEBP rasm tanlang.");
+  event.target.value="";
+  return;
+ }
+
+ setStatus("profileStatus","Rasm yuklanmoqda...");
+
+ try{
+  var formData=new FormData();
+  formData.append("file",file);
+  formData.append("upload_preset",CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder","telemax/profilePhotos");
+
+  var response=await fetch(
+   "https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD_NAME+"/image/upload",
+   {method:"POST",body:formData}
+  );
+
+  var result=await response.json();
+
+  if(!response.ok){
+   throw new Error(result.error?.message||"Cloudinary upload failed");
+  }
+
+  var url=result.secure_url;
+  if(!url)throw new Error("Image URL not received");
+
+  await withTimeout(
+   db.collection("users").doc(currentUser.uid).set({photoURL:url},{merge:true}),
+   15000,
+   "Rasm manzilini saqlash"
+  );
+
+  myProfile.photoURL=url;
+  updateProfileDisplays();
+  await loadUsers();
+
+  setStatus("profileStatus","Profil rasmi muvaffaqiyatli yuklandi!");
+ }catch(e){
+  console.error(e);
+  setStatus("profileStatus","Rasm yuklanmadi: "+e.message);
+ }finally{
+  event.target.value="";
+ }
+}
+
+// SETTINGS
+function openSettings(){
+ if(!currentUser)return;
+ closeProfileMenu();
+ document.getElementById("settingsEmail").textContent=currentUser.email||"";
+ document.getElementById("settingsOverlay").classList.remove("hidden");
+}
+
+function closeSettings(){
+ document.getElementById("settingsOverlay").classList.add("hidden");
+}
+
+function settingsOverlayClose(event){
+ if(event.target.id==="settingsOverlay")closeSettings();
+}
+
+// LOAD USERS
+async function loadUsers(){
+ if(!currentUser)return;
+
+ var box=document.getElementById("users");
+ box.textContent="Loading users...";
+
+ var snapshot=await withTimeout(
+  db.collection("users").get(),
+  15000,
+  "Foydalanuvchilarni yuklash"
+ );
+
+ allUsers=[];
+
+ snapshot.forEach(function(doc){
+  if(doc.id!==currentUser.uid){
+   allUsers.push({id:doc.id,data:doc.data()});
+  }
+ });
+
+ filterUsers();
+}
+
+// SEARCH
+function filterUsers(){
+ var input=document.getElementById("search");
+ var value=(input.value||"").toLowerCase();
+
+ var filtered=allUsers.filter(function(item){
+  var data=item.data;
+  return (data.name||"").toLowerCase().includes(value)||
+         (data.email||"").toLowerCase().includes(value);
+ });
+
+ renderUsers(filtered);
+}
+
+// RENDER USERS
+function renderUsers(users){
+ var box=document.getElementById("users");
+ box.innerHTML="";
+
+ users.forEach(function(item){
+  var data=item.data;
+  var name=data.name||"User";
+
+  var div=document.createElement("div");
+  div.className="user";
+
+  var avatar=document.createElement("div");
+  avatar.className="avatar";
+
+  if(data.photoURL){
+   var img=document.createElement("img");
+   img.src=data.photoURL;
+   img.alt="Profile";
+   img.onerror=function(){avatar.textContent=getInitial(name);};
+   avatar.appendChild(img);
+  }else{
+   avatar.textContent=getInitial(name);
+  }
+
+  var info=document.createElement("div");
+  info.className="userinfo";
+
+  var title=document.createElement("b");
+  title.textContent=name;
+
+  var email=document.createElement("small");
+  email.textContent=data.email||"";
+
+  info.append(title,email);
+  div.append(avatar,info);
+
+  div.onclick=function(){
+   openChat(item.id,name,data.photoURL||"");
+  };
+
+  box.appendChild(div);
+ });
+
+ if(!users.length){
+  box.innerHTML='<div class="empty">No users found.</div>';
+ }
+}
+
+// CHAT ID
+function getChatId(uid1,uid2){
+ return [uid1,uid2].sort().join("_");
+}
+
+// CHAT LIST
+function stopChatListListeners(){
+ Object.values(chatListeners).forEach(function(item){
+  item.ref.off("value",item.handler);
+ });
+ chatListeners={};
+ latestChats={};
+}
+
+function startChatListListeners(){
+ stopChatListListeners();
+
+ var box=document.getElementById("chatList");
+ box.innerHTML='<div class="empty">Loading chats...</div>';
+
+ if(!currentUser)return;
+
+ if(!allUsers.length){
+  box.innerHTML='<div class="empty">Hozircha suhbatlar yo‘q.</div>';
+  return;
+ }
+
+ allUsers.forEach(function(user){
+  var chatId=getChatId(currentUser.uid,user.id);
+  var ref=rtdb.ref("chats/"+chatId+"/messages").limitToLast(1);
+
+  var handler=ref.on("value",function(snapshot){
+   if(!currentUser)return;
+
+   if(snapshot.exists()){
+    var lastMessage=null;
+    snapshot.forEach(function(child){lastMessage=child.val();});
+
+    if(lastMessage){
+     latestChats[user.id]={
+      user:user,
+      message:lastMessage,
+      time:lastMessage.createdAt||0
+     };
+    }
+   }else{
+    delete latestChats[user.id];
+   }
+
+   renderChatList();
+  },function(error){
+   console.error("CHAT LIST ERROR:",error);
+   if(!Object.keys(latestChats).length){
+    box.innerHTML='<div class="empty">Chatlarni yuklashda xatolik.</div>';
+   }
+  });
+
+  chatListeners[user.id]={ref:ref,handler:handler};
+ });
+}
+
+function formatChatTime(timestamp){
+ if(!timestamp)return "";
+ var date=new Date(timestamp);
+ var today=new Date();
+
+ if(date.toDateString()===today.toDateString()){
+  return date.toLocaleTimeString("uz-UZ",{hour:"2-digit",minute:"2-digit"});
+ }
+
+ return date.toLocaleDateString("uz-UZ",{day:"2-digit",month:"2-digit"});
+}
+
+function renderChatList(){
+ var box=document.getElementById("chatList");
+ box.innerHTML="";
+
+ var chats=Object.values(latestChats).sort(function(a,b){
+  return b.time-a.time;
+ });
+
+ if(!chats.length){
+  box.innerHTML='<div class="empty">Hozircha suhbatlar yo‘q. ALL USERS orqali odam bilan suhbat boshlang.</div>';
+  return;
+ }
+
+ chats.forEach(function(item){
+  var user=item.user;
+  var data=user.data||{};
+  var name=data.name||"User";
+  var message=item.message||{};
+
+  var row=document.createElement("div");
+  row.className="chat-row";
+
+  var avatar=document.createElement("div");
+  avatar.className="avatar";
+
+  if(data.photoURL){
+   var img=document.createElement("img");
+   img.src=data.photoURL;
+   img.alt="Profile";
+   img.onerror=function(){avatar.textContent=getInitial(name);};
+   avatar.appendChild(img);
+  }else{
+   avatar.textContent=getInitial(name);
+  }
+
+  var info=document.createElement("div");
+  info.className="userinfo";
+
+  var title=document.createElement("b");
+  title.textContent=name;
+
+  var preview=document.createElement("small");
+  preview.className="chat-preview";
+
+  var prefix=message.senderId===currentUser.uid?"You: ":"";
+  preview.textContent=prefix+(message.text||"");
+
+  info.append(title,preview);
+
+  var time=document.createElement("small");
+  time.className="chat-time";
+  time.textContent=formatChatTime(item.time);
+
+  row.append(avatar,info,time);
+
+  row.onclick=function(){
+   openChat(user.id,name,data.photoURL||"");
+  };
+
+  box.appendChild(row);
+ });
+}
+
+// SEND MESSAGE
+async function sendMessage(){
+ var input=document.getElementById("message");
+ var text=input.value.trim();
+
+ if(!text||!activeChat||!currentUser)return;
+
+ if(text.length>4000){
+  alert("Xabar 4000 belgidan oshmasligi kerak.");
+  return;
+ }
+
+ var friendId=activeChat;
+ var chatId=getChatId(currentUser.uid,friendId);
+ var button=document.querySelector(".send button");
+
+ input.disabled=true;
+ button.disabled=true;
+
+ try{
+  var messageRef=rtdb.ref("chats/"+chatId+"/messages").push();
+
+  await messageRef.set({
+   text:text,
+   senderId:currentUser.uid,
+   createdAt:Date.now()
+  });
+
+  if(activeChat===friendId)input.value="";
+ }catch(e){
+  console.error(e);
+  alert("Xabar yuborilmadi: "+errorMessage(e));
+ }finally{
+  input.disabled=false;
+  button.disabled=false;
+  if(activeChat===friendId)input.focus();
+ }
+}
+
+// OPEN CHAT
+function openChat(friendId,name,photoURL){
+ if(!currentUser||!friendId)return;
+
+ if(unsubscribeMessages){
+  unsubscribeMessages();
+  unsubscribeMessages=null;
+ }
+
+ activeChat=friendId;
+
+ document.getElementById("friendName").textContent=name;
+ showAvatar("friendAvatar",name,photoURL);
+ document.getElementById("chatPage").classList.remove("hidden");
+
+ var messagesBox=document.getElementById("messages");
+ messagesBox.textContent="Loading messages...";
+
+ var chatId=getChatId(currentUser.uid,friendId);
+ var messagesRef=rtdb.ref("chats/"+chatId+"/messages");
+
+ var handler=messagesRef.on("value",function(snapshot){
+  if(activeChat!==friendId)return;
+
+  messagesBox.innerHTML="";
+
+  if(!snapshot.exists()){
+   messagesBox.innerHTML='<div class="empty">No messages yet. Say hello!</div>';
+   return;
+  }
+
+  snapshot.forEach(function(child){
+   var data=child.val();
+
+   var message=document.createElement("div");
+   message.className="msg";
+
+   if(data.senderId===currentUser.uid)message.classList.add("mine");
+
+   var content=document.createElement("div");
+   content.textContent=data.text||"";
+
+   var time=document.createElement("small");
+   time.className="msgtime";
+
+   if(data.createdAt){
+    time.textContent=new Date(data.createdAt).toLocaleTimeString("uz-UZ",{
+     hour:"2-digit",minute:"2-digit"
+    });
+   }
+
+   message.append(content,time);
+   messagesBox.appendChild(message);
+  });
+
+  messagesBox.scrollTop=messagesBox.scrollHeight;
+
+ },function(error){
+  console.error("CHAT ERROR:",error);
+  messagesBox.textContent="Chat error: "+error.message;
+ });
+
+ unsubscribeMessages=function(){
+  messagesRef.off("value",handler);
+ };
+
+ document.getElementById("message").focus();
+}
+
+// CLOSE CHAT
+function closeChat(){
+ if(unsubscribeMessages){
+  unsubscribeMessages();
+  unsubscribeMessages=null;
+ }
+
+ activeChat=null;
+ document.getElementById("chatPage").classList.add("hidden");
+}
+
+// LOGOUT
+async function logout(){
+ stopChatListListeners();
+
+ if(unsubscribeMessages){
+  unsubscribeMessages();
+  unsubscribeMessages=null;
+ }
+
+ activeChat=null;
+ closeProfileMenu();
+ closeEditProfile();
+ closeSettings();
+
+ try{
+  await auth.signOut();
+ }catch(e){
+  console.error(e);
+  alert("Chiqishda xatolik: "+errorMessage(e));
+ }
+}
+
+console.log("TELEMAX JavaScript loaded successfully");
+</script>
+</body>
+</html>
