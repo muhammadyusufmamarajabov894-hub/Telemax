@@ -45,6 +45,7 @@ header{height:68px;background:var(--panel);padding:0 12px 0 14px;display:flex;al
 .premium{font-size:11px;color:var(--warn);margin-left:6px}
 .icon-btn{background:transparent;color:var(--text);font-size:19px;padding:8px 9px;border-radius:10px}
 .icon-btn.qr{font-size:13px;letter-spacing:.5px;border:1.5px solid var(--border2);padding:6px 8px;margin-right:4px}
+#offlineBar{background:#b45309;color:#fff;text-align:center;font-size:13px;padding:7px 12px}
 .page{padding:18px;max-width:650px;margin:auto}
 .hidden{display:none!important}
 button{border:0;border-radius:11px;padding:12px 17px;background:var(--accent);color:var(--accent-text);font-weight:bold;cursor:pointer}
@@ -54,7 +55,8 @@ input{width:100%;padding:14px;margin:7px 0;border:1px solid var(--border2);borde
 input:focus{border-color:var(--accent)}
 .authbox{margin-top:35px;background:var(--panel);padding:22px;border-radius:20px;border:1px solid var(--border)}
 .authbox button{width:100%;margin-top:10px}
-.about{margin-top:26px;padding:0 4px;color:var(--muted);font-size:14px;line-height:1.6}
+#aboutWrap{padding-top:0}
+.about{margin-top:0;padding:0 4px;color:var(--muted);font-size:14px;line-height:1.6}
 .about h1{font-size:17px;color:var(--text);margin:0 0 8px}
 .about p{margin:0 0 8px}
 #status,#homeStatus{font-size:13px;color:var(--warn);overflow-wrap:anywhere}
@@ -112,7 +114,7 @@ input:focus{border-color:var(--accent)}
 .chatperson .avatar{width:42px;height:42px}
 .chatperson small{display:block;color:var(--accent);margin-top:4px}
 #messages{height:calc(100dvh - 143px);overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}
-.msg{background:var(--msg,#203649);padding:11px 14px;border-radius:15px 15px 15px 4px;max-width:82%;overflow-wrap:anywhere;align-self:flex-start}
+.msg{padding:11px 14px;border-radius:15px 15px 15px 4px;max-width:82%;overflow-wrap:anywhere;align-self:flex-start}
 body.light .msg{background:#e4edf5}
 body:not(.light) .msg{background:#203649}
 .mine{background:var(--mine)!important;color:#fff;align-self:flex-end;border-radius:15px 15px 4px 15px}
@@ -137,7 +139,13 @@ body:not(.light) .msg{background:#203649}
  </div>
 </header>
 
-<div id="authPage" class="page">
+<div id="offlineBar" class="hidden">Internet yo‘q. Saqlangan ma’lumotlar ko‘rsatilmoqda.</div>
+
+<div id="splash" class="page">
+ <div class="empty">Yuklanmoqda...</div>
+</div>
+
+<div id="authPage" class="page hidden">
  <div class="authbox">
   <h2>Welcome to TELEMAX</h2>
   <p style="color:var(--muted)">Connect with people around you.</p>
@@ -147,7 +155,9 @@ body:not(.light) .msg{background:#203649}
   <button id="loginBtn" class="secondary" onclick="login()">SIGN IN</button>
   <p id="status"></p>
  </div>
+</div>
 
+<div id="aboutWrap" class="page">
  <section class="about">
   <h1>TELEMAX nima?</h1>
   <p>TELEMAX - do‘stlar bilan chat qilish uchun messenger. Akkaunt oching, odamlarni qidiring va real vaqtda yozishing.</p>
@@ -225,7 +235,7 @@ body:not(.light) .msg{background:#203649}
   </div>
   <div class="menu-item">
    <span>ℹ</span>
-   <div>About TELEMAX<div style="font-size:12px;color:var(--muted);margin-top:5px">Version 1.1</div></div>
+   <div>About TELEMAX<div style="font-size:12px;color:var(--muted);margin-top:5px">Version 1.2</div></div>
   </div>
   <button class="cancel-btn" onclick="closeSettings()">Close</button>
  </div>
@@ -274,6 +284,21 @@ body:not(.light) .msg{background:#203649}
 <script>
 "use strict";
 
+// Firebase 4 soniyada javob bermasa, "Yuklanmoqda" o'rniga kirish oynasini ko'rsatamiz
+setTimeout(function(){
+ var splash=document.getElementById("splash");
+ if(splash&&!splash.classList.contains("hidden")){
+  splash.classList.add("hidden");
+  document.getElementById("authPage").classList.remove("hidden");
+ }
+},4000);
+
+// Kutubxona yuklanmagan bo'lsa (birinchi marta internetsiz ochilganda)
+if(typeof firebase==="undefined"){
+ document.getElementById("splash").innerHTML='<div class="empty">Sahifa to‘liq yuklanmadi. Internetga ulanib, bir marta qayta oching.</div>';
+ throw new Error("Firebase yuklanmadi");
+}
+
 // CLOUDINARY
 var CLOUDINARY_CLOUD_NAME="ohce4wop";
 var CLOUDINARY_UPLOAD_PRESET="telemax_unsigned";
@@ -316,6 +341,52 @@ var persistenceReady=auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
  console.error("PERSISTENCE ERROR:",error);
  authReady=true;
 });
+
+// LOCAL CACHE (telefonda saqlash)
+function cacheGet(key,fallback){
+ try{
+  var raw=localStorage.getItem("tm_"+key);
+  return raw?JSON.parse(raw):fallback;
+ }catch(e){
+  return fallback;
+ }
+}
+
+function cacheSet(key,value){
+ try{
+  localStorage.setItem("tm_"+key,JSON.stringify(value));
+ }catch(e){}
+}
+
+function saveProfileCache(){
+ if(!currentUser)return;
+ cacheSet("profile_"+currentUser.uid,{
+  uid:currentUser.uid,
+  email:currentUser.email||"",
+  name:myProfile.name||"",
+  photoURL:myProfile.photoURL||""
+ });
+}
+
+// ONLINE / OFFLINE
+function updateOnlineStatus(){
+ document.getElementById("offlineBar").classList.toggle("hidden",navigator.onLine);
+}
+
+window.addEventListener("offline",updateOnlineStatus);
+
+window.addEventListener("online",function(){
+ updateOnlineStatus();
+ if(!currentUser)return;
+
+ loadUsers().then(function(){
+  if(currentUser)startChatListListeners();
+ }).catch(function(error){
+  console.error("RECONNECT ERROR:",error);
+ });
+});
+
+updateOnlineStatus();
 
 // THEME (tungi / kunduzgi rejim)
 function applyTheme(theme){
@@ -446,8 +517,7 @@ if("serviceWorker" in navigator){
   });
  });
 }
-
-function getInitial(name){
+ function getInitial(name){
  return (name||"U").trim().charAt(0).toUpperCase()||"U";
 }
 
@@ -558,6 +628,7 @@ async function register(){
   try{
    await saveUserProfile(user,name);
    myProfile={uid:user.uid,email:user.email,name:name,photoURL:""};
+   cacheSet("profile_"+user.uid,myProfile);
    setStatus("status","Account muvaffaqiyatli yaratildi!");
   }catch(profileError){
    console.error("PROFILE SAVE ERROR:",profileError);
@@ -625,6 +696,8 @@ auth.onAuthStateChanged(async function(user){
 
  activeChat=null;
 
+ document.getElementById("splash").classList.add("hidden");
+ document.getElementById("aboutWrap").classList.toggle("hidden",!!user);
  document.getElementById("authPage").classList.toggle("hidden",!!user);
  document.getElementById("homePage").classList.toggle("hidden",!user);
  document.getElementById("chatPage").classList.add("hidden");
@@ -637,7 +710,7 @@ auth.onAuthStateChanged(async function(user){
   return;
  }
 
- setStatus("homeStatus","Profil yuklanmoqda...");
+ setStatus("homeStatus",navigator.onLine?"Profil yuklanmoqda...":"");
 
  try{
   await loadMyProfile();
@@ -662,8 +735,23 @@ auth.onAuthStateChanged(async function(user){
 async function loadMyProfile(){
  if(!currentUser)return;
 
+ var cached=cacheGet("profile_"+currentUser.uid,null);
+
+ if(cached){
+  myProfile=cached;
+  updateProfileDisplays();
+  if(!navigator.onLine)return;
+ }
+
  var ref=db.collection("users").doc(currentUser.uid);
- var doc=await withTimeout(ref.get(),15000,"Profilni yuklash");
+ var doc;
+
+ try{
+  doc=await withTimeout(ref.get(),15000,"Profilni yuklash");
+ }catch(e){
+  if(cached)return;
+  throw e;
+ }
 
  if(!doc.exists){
   var name=(currentUser.email||"User").split("@")[0];
@@ -677,9 +765,16 @@ async function loadMyProfile(){
    photoURL:""
   };
  }else{
-  myProfile=doc.data()||{};
+  var d=doc.data()||{};
+  myProfile={
+   uid:currentUser.uid,
+   email:d.email||currentUser.email||"",
+   name:d.name||"",
+   photoURL:d.photoURL||""
+  };
  }
 
+ saveProfileCache();
  updateProfileDisplays();
 }
 
@@ -751,6 +846,7 @@ async function updateProfile(){
   );
 
   myProfile.name=name;
+  saveProfileCache();
   updateProfileDisplays();
   await loadUsers();
   setStatus("profileStatus","Ism muvaffaqiyatli o‘zgartirildi!");
@@ -810,6 +906,7 @@ async function uploadPhoto(event){
   );
 
   myProfile.photoURL=url;
+  saveProfileCache();
   updateProfileDisplays();
   await loadUsers();
 
@@ -836,29 +933,48 @@ function closeSettings(){
 
 function settingsOverlayClose(event){
  if(event.target.id==="settingsOverlay")closeSettings();
-}
-
-// LOAD USERS
+ }
+ // LOAD USERS
 async function loadUsers(){
  if(!currentUser)return;
 
  var box=document.getElementById("users");
- box.textContent="Loading users...";
+ var cachedUsers=cacheGet("users_"+currentUser.uid,null);
 
- var snapshot=await withTimeout(
-  db.collection("users").get(),
-  15000,
-  "Foydalanuvchilarni yuklash"
- );
+ if(cachedUsers){
+  allUsers=cachedUsers;
+  filterUsers();
+  if(!navigator.onLine)return;
+ }else{
+  box.textContent="Loading users...";
+ }
+
+ var snapshot;
+
+ try{
+  snapshot=await withTimeout(
+   db.collection("users").get(),
+   15000,
+   "Foydalanuvchilarni yuklash"
+  );
+ }catch(e){
+  if(cachedUsers)return;
+  throw e;
+ }
 
  allUsers=[];
 
  snapshot.forEach(function(doc){
   if(doc.id!==currentUser.uid){
-   allUsers.push({id:doc.id,data:doc.data()});
+   var d=doc.data()||{};
+   allUsers.push({
+    id:doc.id,
+    data:{name:d.name||"",email:d.email||"",photoURL:d.photoURL||""}
+   });
   }
  });
 
+ cacheSet("users_"+currentUser.uid,allUsers);
  filterUsers();
 }
 
@@ -952,6 +1068,23 @@ function startChatListListeners(){
   return;
  }
 
+ // Avval telefonda saqlangan oxirgi xabarlarni ko'rsatamiz
+ allUsers.forEach(function(user){
+  var cachedLast=cacheGet("last_"+getChatId(currentUser.uid,user.id),null);
+
+  if(cachedLast){
+   latestChats[user.id]={
+    user:user,
+    message:cachedLast,
+    time:cachedLast.createdAt||0
+   };
+  }
+ });
+
+ if(Object.keys(latestChats).length||!navigator.onLine){
+  renderChatList();
+ }
+
  allUsers.forEach(function(user){
   var chatId=getChatId(currentUser.uid,user.id);
   var ref=rtdb.ref("chats/"+chatId+"/messages").limitToLast(1);
@@ -964,6 +1097,7 @@ function startChatListListeners(){
     snapshot.forEach(function(child){lastMessage=child.val();});
 
     if(lastMessage){
+     cacheSet("last_"+chatId,lastMessage);
      latestChats[user.id]={
       user:user,
       message:lastMessage,
@@ -971,6 +1105,7 @@ function startChatListListeners(){
      };
     }
    }else{
+    cacheSet("last_"+chatId,null);
     delete latestChats[user.id];
    }
 
@@ -1062,7 +1197,8 @@ function renderChatList(){
 }
 
 // SEND MESSAGE
-async function sendMessage(){
+// Internet bo'lmasa ham xabar darrov ko'rinadi, internet qaytganda yuboriladi
+function sendMessage(){
  var input=document.getElementById("message");
  var text=input.value.trim();
 
@@ -1075,29 +1211,62 @@ async function sendMessage(){
 
  var friendId=activeChat;
  var chatId=getChatId(currentUser.uid,friendId);
- var button=document.querySelector(".send button");
 
- input.disabled=true;
- button.disabled=true;
+ input.value="";
+ input.focus();
 
  try{
   var messageRef=rtdb.ref("chats/"+chatId+"/messages").push();
 
-  await messageRef.set({
+  messageRef.set({
    text:text,
    senderId:currentUser.uid,
    createdAt:Date.now()
+  }).catch(function(e){
+   console.error(e);
+   alert("Xabar yuborilmadi: "+errorMessage(e));
+   if(activeChat===friendId&&!input.value)input.value=text;
   });
-
-  if(activeChat===friendId)input.value="";
  }catch(e){
   console.error(e);
   alert("Xabar yuborilmadi: "+errorMessage(e));
- }finally{
-  input.disabled=false;
-  button.disabled=false;
-  if(activeChat===friendId)input.focus();
+  input.value=text;
  }
+}
+
+// RENDER MESSAGES
+function renderMessages(list){
+ var messagesBox=document.getElementById("messages");
+ messagesBox.innerHTML="";
+
+ if(!list.length){
+  messagesBox.innerHTML='<div class="empty">No messages yet. Say hello!</div>';
+  return;
+ }
+
+ list.forEach(function(data){
+  var message=document.createElement("div");
+  message.className="msg";
+
+  if(currentUser&&data.senderId===currentUser.uid)message.classList.add("mine");
+
+  var content=document.createElement("div");
+  content.textContent=data.text||"";
+
+  var time=document.createElement("small");
+  time.className="msgtime";
+
+  if(data.createdAt){
+   time.textContent=new Date(data.createdAt).toLocaleTimeString("uz-UZ",{
+    hour:"2-digit",minute:"2-digit"
+   });
+  }
+
+  message.append(content,time);
+  messagesBox.appendChild(message);
+ });
+
+ messagesBox.scrollTop=messagesBox.scrollHeight;
 }
 
 // OPEN CHAT
@@ -1116,50 +1285,33 @@ function openChat(friendId,name,photoURL){
  document.getElementById("chatPage").classList.remove("hidden");
 
  var messagesBox=document.getElementById("messages");
- messagesBox.textContent="Loading messages...";
-
  var chatId=getChatId(currentUser.uid,friendId);
+ var cachedMessages=cacheGet("msgs_"+chatId,null);
+
+ if(cachedMessages&&cachedMessages.length){
+  renderMessages(cachedMessages);
+ }else{
+  messagesBox.textContent=navigator.onLine?"Loading messages...":"Internet yo‘q. Bu suhbat telefonda saqlanmagan.";
+ }
+
  var messagesRef=rtdb.ref("chats/"+chatId+"/messages");
 
  var handler=messagesRef.on("value",function(snapshot){
   if(activeChat!==friendId)return;
 
-  messagesBox.innerHTML="";
-
-  if(!snapshot.exists()){
-   messagesBox.innerHTML='<div class="empty">No messages yet. Say hello!</div>';
-   return;
-  }
-
+  var list=[];
   snapshot.forEach(function(child){
-   var data=child.val();
-
-   var message=document.createElement("div");
-   message.className="msg";
-
-   if(data.senderId===currentUser.uid)message.classList.add("mine");
-
-   var content=document.createElement("div");
-   content.textContent=data.text||"";
-
-   var time=document.createElement("small");
-   time.className="msgtime";
-
-   if(data.createdAt){
-    time.textContent=new Date(data.createdAt).toLocaleTimeString("uz-UZ",{
-     hour:"2-digit",minute:"2-digit"
-    });
-   }
-
-   message.append(content,time);
-   messagesBox.appendChild(message);
+   list.push(child.val());
   });
 
-  messagesBox.scrollTop=messagesBox.scrollHeight;
+  cacheSet("msgs_"+chatId,list.slice(-100));
+  renderMessages(list);
 
  },function(error){
   console.error("CHAT ERROR:",error);
-  messagesBox.textContent="Chat error: "+error.message;
+  if(!cachedMessages||!cachedMessages.length){
+   messagesBox.textContent="Chat error: "+error.message;
+  }
  });
 
  unsubscribeMessages=function(){
