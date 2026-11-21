@@ -704,6 +704,198 @@ async function uploadPhoto(event){
  try{
   var formData=new FormData();
   formData.append("file",file);
+async function register(){
+ if(authBusy)return;
+ var email=document.getElementById("email").value.trim();
+ var password=document.getElementById("password").value;
+ if(!email||password.length<6){
+  setStatus("status","Email kiriting. Parol kamida 6 ta belgi bo‘lsin.");
+  return;
+ }
+ setAuthBusy(true);
+ setStatus("status","Account yaratilmoqda...");
+ try{
+  await persistenceReady;
+  var result=await withTimeout(auth.createUserWithEmailAndPassword(email,password),20000,"Account yaratish");
+  var user=result.user;
+  var name=email.split("@")[0];
+  setStatus("status","Account yaratildi. Profil saqlanmoqda...");
+  try{
+   await saveUserProfile(user,name);
+   myProfile={uid:user.uid,email:user.email,name:name,photoURL:""};
+   cacheSet("profile_"+user.uid,myProfile);
+   setStatus("status","Account muvaffaqiyatli yaratildi!");
+  }catch(profileError){
+   console.error("PROFILE SAVE ERROR:",profileError);
+   setStatus("status","Account yaratildi, lekin profil saqlanmadi: "+errorMessage(profileError));
+   setStatus("homeStatus","Profil saqlash xatosi: "+errorMessage(profileError));
+  }
+ }catch(e){
+  console.error("REGISTER ERROR:",e);
+  if(auth.currentUser){
+   setStatus("homeStatus","Account yaratishdagi xatolik: "+errorMessage(e));
+  }else{
+   setStatus("status",errorMessage(e));
+  }
+ }finally{
+  setAuthBusy(false);
+ }
+}
+
+async function login(){
+ if(authBusy)return;
+ var email=document.getElementById("email").value.trim();
+ var password=document.getElementById("password").value;
+ if(!email||!password){
+  setStatus("status","Email va parolni kiriting.");
+  return;
+ }
+ setAuthBusy(true);
+ setStatus("status","Akkauntga kirilmoqda...");
+ try{
+  await persistenceReady;
+  await withTimeout(auth.signInWithEmailAndPassword(email,password),20000,"Login");
+  setStatus("status","Kirish muvaffaqiyatli!");
+ }catch(e){
+  console.error("LOGIN ERROR:",e);
+  setStatus("status",errorMessage(e));
+ }finally{
+  setAuthBusy(false);
+ }
+}
+
+auth.onAuthStateChanged(async function(user){
+ var version=++authStateVersion;
+ currentUser=user;
+ stopChatListListeners();
+ if(unsubscribeMessages){unsubscribeMessages();unsubscribeMessages=null;}
+ activeChat=null;
+
+ var splashEl=document.getElementById("splash");
+ if(splashEl)splashEl.classList.add("hidden");
+ document.getElementById("aboutWrap").classList.toggle("hidden",!!user);
+ document.getElementById("authPage").classList.toggle("hidden",!!user);
+ document.getElementById("homePage").classList.toggle("hidden",!user);
+ document.getElementById("chatPage").classList.add("hidden");
+
+ if(!user){
+  myProfile={};allUsers=[];latestChats={};
+  setStatus("homeStatus","");
+  return;
+ }
+
+ setStatus("homeStatus",navigator.onLine?"Profil yuklanmoqda...":"");
+ try{
+  await loadMyProfile();
+  if(version!==authStateVersion)return;
+  await loadUsers();
+  if(version!==authStateVersion)return;
+  startChatListListeners();
+  setStatus("homeStatus","");
+ }catch(e){
+  console.error("USER LOAD ERROR:",e);
+  if(version===authStateVersion){
+   setStatus("homeStatus","Ma’lumot yuklanmadi: "+errorMessage(e));
+  }
+ }
+});
+
+async function loadMyProfile(){
+ if(!currentUser)return;
+ var cached=cacheGet("profile_"+currentUser.uid,null);
+ if(cached){
+  myProfile=cached;
+  updateProfileDisplays();
+  if(!navigator.onLine)return;
+ }
+ var ref=db.collection("users").doc(currentUser.uid);
+ var doc;
+ try{
+  doc=await withTimeout(ref.get(),15000,"Profilni yuklash");
+ }catch(e){
+  if(cached)return;
+  throw e;
+ }
+ if(!doc.exists){
+  var name=(currentUser.email||"User").split("@")[0];
+  await saveUserProfile(currentUser,name);
+  myProfile={uid:currentUser.uid,email:currentUser.email||"",name:name,photoURL:""};
+ }else{
+  var d=doc.data()||{};
+  myProfile={uid:currentUser.uid,email:d.email||currentUser.email||"",name:d.name||"",photoURL:d.photoURL||""};
+ }
+ saveProfileCache();
+ updateProfileDisplays();
+}
+
+function openProfileMenu(){
+ if(!currentUser)return;
+ updateProfileDisplays();
+ document.getElementById("profileOverlay").classList.remove("hidden");
+}
+function closeProfileMenu(){document.getElementById("profileOverlay").classList.add("hidden");}
+function overlayClose(event){if(event.target.id==="profileOverlay")closeProfileMenu();}
+
+function updateProfileDisplays(){
+ if(!currentUser)return;
+ var name=myProfile.name||(currentUser.email||"User").split("@")[0];
+ var photo=myProfile.photoURL||"";
+ document.getElementById("menuName").textContent=name;
+ document.getElementById("menuEmail").textContent=currentUser.email||"";
+ showAvatar("menuAvatar",name,photo);
+ showAvatar("editAvatar",name,photo);
+}
+
+function openEditProfile(){
+ closeProfileMenu();
+ document.getElementById("newName").value=myProfile.name||"";
+ setStatus("profileStatus","");
+ updateProfileDisplays();
+ document.getElementById("editOverlay").classList.remove("hidden");
+}
+function closeEditProfile(){document.getElementById("editOverlay").classList.add("hidden");}
+function editOverlayClose(event){if(event.target.id==="editOverlay")closeEditProfile();}
+
+async function updateProfile(){
+ if(!currentUser)return;
+ var name=document.getElementById("newName").value.trim();
+ if(name.length<2){
+  setStatus("profileStatus","Ism kamida 2 ta belgi bo‘lsin.");
+  return;
+ }
+ var button=document.querySelector("#editOverlay .edit-actions button");
+ button.disabled=true;
+ setStatus("profileStatus","Saqlanmoqda...");
+ try{
+  await withTimeout(db.collection("users").doc(currentUser.uid).set({name:name},{merge:true}),15000,"Ismni saqlash");
+  myProfile.name=name;
+  saveProfileCache();
+  updateProfileDisplays();
+  await loadUsers();
+  setStatus("profileStatus","Ism muvaffaqiyatli o‘zgartirildi!");
+ }catch(e){
+  console.error(e);
+  setStatus("profileStatus","Xatolik: "+errorMessage(e));
+ }finally{
+  button.disabled=false;
+ }
+}
+
+function choosePhoto(){if(!currentUser)return;document.getElementById("photoInput").click();}
+
+async function uploadPhoto(event){
+ if(!currentUser)return;
+ var file=event.target.files[0];
+ if(!file)return;
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
+  setStatus("profileStatus","Faqat JPG, PNG yoki WEBP rasm tanlang.");
+  event.target.value="";
+  return;
+ }
+ setStatus("profileStatus","Rasm yuklanmoqda...");
+ try{
+  var formData=new FormData();
+  formData.append("file",file);
   formData.append("upload_preset",CLOUDINARY_UPLOAD_PRESET);
   formData.append("folder","telemax/profilePhotos");
   var response=await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD_NAME+"/image/upload",{method:"POST",body:formData});
@@ -733,7 +925,7 @@ function openSettings(){
 }
 function closeSettings(){document.getElementById("settingsOverlay").classList.add("hidden");}
 function settingsOverlayClose(event){if(event.target.id==="settingsOverlay")closeSettings();}
- async function loadUsers(){
+async function loadUsers(){
  if(!currentUser)return;
  var box=document.getElementById("users");
  var cachedUsers=cacheGet("users_"+currentUser.uid,null);
