@@ -720,15 +720,22 @@ function closeProfileMenu(){document.getElementById("profileOverlay").classList.
 function overlayClose(event){if(event.target.id==="profileOverlay")closeProfileMenu();}
 
 function updateProfileDisplays(){
- if(!currentUser)return;
- var name=myProfile.name||(currentUser.email||"User").split("@")[0];
- var photo=myProfile.photoURL||"";
- document.getElementById("menuName").textContent=name;
- document.getElementById("menuEmail").textContent=currentUser.email||"";
- showAvatar("menuAvatar",name,photo);
- showAvatar("editAvatar",name,photo);
-}
+ if(!currentUser) return;
 
+ var name = myProfile.name ||
+  (currentUser.email || "User").split("@")[0];
+
+ var photo = myProfile.photoURL || "";
+
+ var menuName = document.getElementById("menuName");
+ var menuEmail = document.getElementById("menuEmail");
+
+ if(menuName) menuName.textContent = name;
+ if(menuEmail) menuEmail.textContent = currentUser.email || "";
+
+ showAvatar("menuAvatar", name, photo);
+ showAvatar("editAvatar", name, photo);
+ }
 function openEditProfile(){
  closeProfileMenu();
  document.getElementById("newName").value=myProfile.name||"";
