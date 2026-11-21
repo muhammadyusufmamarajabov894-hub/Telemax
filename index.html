@@ -1429,37 +1429,198 @@ console.log("TELEMAX JavaScript loaded successfully");
   };
  }
 })();
- (function(){
- function ensureUsersEl(){
-  var box = document.getElementById("users");
-  if(!box){
-   box = document.createElement("div");
-   box.id = "users";
-   box.className = "hidden";
-   document.body.appendChild(box);
+(function(){
+ function ensureEl(id, tag, cls){
+  var el = document.getElementById(id);
+  if(!el){
+   el = document.createElement(tag || "div");
+   el.id = id;
+   if(cls) el.className = cls;
+   document.body.appendChild(el);
   }
-  return box;
+  return el;
  }
 
- var origLoadUsers = window.loadUsers;
- if(typeof origLoadUsers === "function"){
-  window.loadUsers = function(){
-   ensureUsersEl();
-   return origLoadUsers.apply(this, arguments);
-  };
+ ["loadUsers", "renderUsers", "filterUsers"].forEach(function(fnName){
+  var orig = window[fnName];
+  if(typeof orig === "function"){
+   window[fnName] = function(){
+    ensureEl("users", "div", "hidden");
+    ensureEl("search", "input", "hidden");
+    ensureEl("homeStatus", "p", "hidden");
+    ensureEl("chatList", "div", "hidden");
+    try{
+     return orig.apply(this, arguments);
+    }catch(err){
+     console.warn(fnName + " guarded:", err);
+    }
+   };
+  }
+ });
+
+ function ensureMediaControls(){
+  var chatPage = document.getElementById("chatPage");
+  if(!chatPage) return;
+  var sendBar = chatPage.querySelector(".send");
+  if(!sendBar) return;
+
+  if(!document.getElementById("attachBtn")){
+   var att = document.createElement("button");
+   att.id = "attachBtn";
+   att.type = "button";
+   att.className = "secondary attach-btn";
+   att.title = "Biriktirish";
+   att.textContent = "📎";
+   att.style.cssText = "padding:12px 14px;font-size:18px;flex-shrink:0";
+   att.onclick = function(){
+    var m = document.getElementById("attachMenu");
+    if(m) m.classList.toggle("hidden");
+   };
+   sendBar.insertBefore(att, sendBar.firstChild);
+  }
+
+  if(!document.getElementById("attachMenu")){
+   var menu = document.createElement("div");
+   menu.id = "attachMenu";
+   menu.className = "hidden";
+   menu.style.cssText = "position:absolute;left:10px;bottom:82px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:6px;box-shadow:0 8px 24px #0006;z-index:30;min-width:190px";
+   menu.innerHTML =
+    '<button class="attach-item" type="button" data-kind="image" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;color:var(--text);padding:11px 14px;text-align:left"><span>🖼</span> Rasm</button>' +
+    '<button class="attach-item" type="button" data-kind="video" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;color:var(--text);padding:11px 14px;text-align:left"><span>🎥</span> Video</button>' +
+    '<button class="attach-item" type="button" data-kind="file" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;color:var(--text);padding:11px 14px;text-align:left"><span>📄</span> Fayl</button>';
+   menu.addEventListener("click", function(e){
+    var btn = e.target.closest("[data-kind]");
+    if(!btn) return;
+    menu.classList.add("hidden");
+    var kind = btn.getAttribute("data-kind");
+    var inp = document.getElementById(kind === "image" ? "imageInput" : (kind === "video" ? "videoInput" : "fileInput"));
+    if(inp) inp.click();
+   });
+   chatPage.appendChild(menu);
+  }
+
+  ["imageInput", "videoInput", "fileInput"].forEach(function(id){
+   if(!document.getElementById(id)){
+    var f = document.createElement("input");
+    f.type = "file";
+    f.id = id;
+    f.className = "hidden";
+    if(id === "imageInput") f.accept = "image/*";
+    if(id === "videoInput") f.accept = "video/*";
+    f.addEventListener("change", function(ev){
+     var file = ev.target.files && ev.target.files[0];
+     ev.target.value = "";
+     if(!file || !currentUser || !activeChat) return;
+     var isImg = (file.type || "").indexOf("image/") === 0;
+     var isVid = (file.type || "").indexOf("video/") === 0;
+     var kind = isImg ? "image" : (isVid ? "video" : "file");
+     var xhr = new XMLHttpRequest();
+     xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/auto/upload");
+     xhr.upload.onprogress = function(pe){
+      if(pe.lengthComputable && typeof window.setCircleUploadProgress === "function"){
+       window.setCircleUploadProgress(file.name, Math.round(pe.loaded / pe.total * 100));
+      }
+     };
+     xhr.onload = function(){
+      if(typeof window.hideCircleUploadProgress === "function") window.hideCircleUploadProgress();
+      var res = {};
+      try{ res = JSON.parse(xhr.responseText); }catch(e){}
+      if(xhr.status >= 200 && xhr.status < 300 && res.secure_url){
+       rtdb.ref("chats/" + getChatId(currentUser.uid, activeChat) + "/messages").push().set({
+        type: kind,
+        url: res.secure_url,
+        fileName: file.name || "",
+        size: file.size || 0,
+        senderId: currentUser.uid,
+        createdAt: Date.now()
+       });
+      }else{
+       alert("Fayl yuklanmadi: " + ((res.error && res.error.message) || xhr.status));
+      }
+     };
+     xhr.onerror = function(){
+      if(typeof window.hideCircleUploadProgress === "function") window.hideCircleUploadProgress();
+      alert("Internet aloqasini tekshiring.");
+     };
+     var fd = new FormData();
+     fd.append("file", file);
+     fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+     fd.append("folder", "telemax/chat");
+     if(typeof window.setCircleUploadProgress === "function") window.setCircleUploadProgress(file.name, 5);
+     xhr.send(fd);
+    });
+    document.body.appendChild(f);
+   }
+  });
+
+  if(!document.getElementById("micBtn") && navigator.mediaDevices && window.MediaRecorder){
+   var mic = document.createElement("button");
+   mic.id = "micBtn";
+   mic.type = "button";
+   mic.title = "Ovozli xabar";
+   mic.textContent = "🎤";
+   mic.style.cssText = "padding:12px 14px;font-size:18px;flex-shrink:0";
+   var rec = null, chunks = [], stream = null;
+   mic.onclick = async function(){
+    if(!rec){
+     try{
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      chunks = [];
+      rec = new MediaRecorder(stream);
+      rec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function(){
+       if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+       var blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+       rec = null;
+       mic.textContent = "🎤";
+       if(blob.size < 800 || !currentUser || !activeChat) return;
+       var file = new File([blob], "voice.webm", { type: blob.type });
+       var xhr = new XMLHttpRequest();
+       xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/auto/upload");
+       xhr.upload.onprogress = function(pe){
+        if(pe.lengthComputable && typeof window.setCircleUploadProgress === "function"){
+         window.setCircleUploadProgress("Ovozli xabar...", Math.round(pe.loaded / pe.total * 100));
+        }
+       };
+       xhr.onload = function(){
+        if(typeof window.hideCircleUploadProgress === "function") window.hideCircleUploadProgress();
+        var res = {};
+        try{ res = JSON.parse(xhr.responseText); }catch(e){}
+        if(xhr.status >= 200 && xhr.status < 300 && res.secure_url){
+         rtdb.ref("chats/" + getChatId(currentUser.uid, activeChat) + "/messages").push().set({
+          type: "audio",
+          url: res.secure_url,
+          fileName: "voice.webm",
+          size: file.size || 0,
+          senderId: currentUser.uid,
+          createdAt: Date.now()
+         });
+        }
+       };
+       var fd = new FormData();
+       fd.append("file", file);
+       fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+       fd.append("folder", "telemax/chat");
+       if(typeof window.setCircleUploadProgress === "function") window.setCircleUploadProgress("Ovozli xabar...", 5);
+       xhr.send(fd);
+      };
+      rec.start();
+      mic.textContent = "⏹";
+     }catch(err){
+      alert("Mikrofonga ruxsat berilmadi.");
+     }
+    }else{
+     try{ rec.stop(); }catch(e){}
+    }
+   };
+   sendBar.appendChild(mic);
+  }
  }
 
- var origRenderUsers = window.renderUsers;
- if(typeof origRenderUsers === "function"){
-  window.renderUsers = function(users){
-   ensureUsersEl();
-   return origRenderUsers.call(this, users);
-  };
- }
-
- ensureUsersEl();
+ setInterval(ensureMediaControls, 700);
+ ensureMediaControls();
 })();
- 
+
 </script>
 <script src="media.js"></script>
 <script src="design.js"></script>
