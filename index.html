@@ -1414,6 +1414,21 @@ async function logout(){
 })();
 
 console.log("TELEMAX JavaScript loaded successfully");
+(function(){
+ var origRenderUsers = window.renderUsers;
+ if(typeof origRenderUsers === "function"){
+  window.renderUsers = function(users){
+   var box = document.getElementById("users");
+   if(!box){
+    box = document.createElement("div");
+    box.id = "users";
+    box.className = "hidden";
+    document.body.appendChild(box);
+   }
+   return origRenderUsers.call(this, users);
+  };
+ }
+})();
 </script>
 <script src="media.js"></script>
 <script src="design.js"></script>
