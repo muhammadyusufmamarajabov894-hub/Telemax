@@ -11,7 +11,6 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://muhammadyusufmamarajabov894-hub.github.io/Telemax/">
 
-<!-- PWA: ilova sifatida o'rnatish -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" id="themeColor" content="#142536">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -123,6 +122,39 @@ body:not(.light) .msg{background:#203649}
 .send{position:absolute;bottom:0;width:100%;min-height:75px;padding:10px;background:var(--panel);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
 .send input{flex:1;min-width:0;margin:0}
 .send button{font-size:20px;padding:12px 17px}
+
+.tm-circle-overlay{position:fixed;inset:0;z-index:25;background:rgba(7,16,26,.65);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
+.tm-circle-box{position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center;background:rgba(20,37,54,.92);border-radius:50%;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.tm-circle-svg{width:76px;height:76px;transform:rotate(-90deg)}
+.tm-circle-track{fill:none;stroke:rgba(255,255,255,.2);stroke-width:4.5}
+.tm-circle-fill{fill:none;stroke:#38bdf8;stroke-width:4.5;stroke-linecap:round;transition:stroke-dashoffset .12s linear}
+.tm-circle-pct{position:absolute;font-size:14px;font-weight:700;color:#fff}
+.tm-circle-text{background:rgba(20,37,54,.92);color:#fff;padding:6px 14px;border-radius:14px;font-size:13px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.tm-story-strip{display:flex;gap:12px;padding:8px 14px 10px;overflow-x:auto;border-bottom:1px solid var(--border)}
+.tm-story-item{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:66px;cursor:pointer;flex-shrink:0}
+.tm-story-ring{width:62px;height:62px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,#2bd9a9,#2b95f0);display:flex;align-items:center;justify-content:center}
+.tm-story-ring.add{background:var(--btn2);border:1.5px dashed var(--accent)}
+.tm-story-inner{width:100%;height:100%;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:22px;font-weight:700;color:var(--accent)}
+.tm-story-inner img,.tm-story-inner video{width:100%;height:100%;object-fit:cover}
+.tm-story-name{font-size:12px;color:var(--text);max-width:68px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+
+.tm-story-viewer{position:fixed;inset:0;z-index:35;background:#050a10;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
+.tm-story-bars{display:flex;gap:5px;height:4px}
+.tm-story-bar{flex:1;background:rgba(255,255,255,.28);border-radius:4px;overflow:hidden}
+.tm-story-bar-fill{height:100%;width:0%;background:#fff;transition:width .1s linear}
+.tm-story-top{display:flex;align-items:center;justify-content:space-between;margin-top:10px;color:#fff}
+.tm-story-user{display:flex;align-items:center;gap:10px}
+.tm-story-media{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:12px 0}
+.tm-story-media video,.tm-story-media img{max-width:100%;max-height:100%;border-radius:14px;background:#000}
+.tm-story-cap{color:#fff;text-align:center;font-size:15px;padding-bottom:10px}
+
+.tm-sub-panel{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding-bottom:32px}
+.tm-sub-head{position:sticky;top:0;height:62px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 14px;z-index:2}
+.tm-sub-body{max-width:650px;margin:0 auto;padding:16px}
+.tm-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:var(--card);border:1px solid var(--card-border);border-radius:14px;margin-bottom:10px}
+.tm-opt b{display:block;font-size:15px}
+.tm-opt small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
 </style>
 </head>
 <body>
@@ -259,6 +291,7 @@ body:not(.light) .msg{background:#203649}
 </div>
 
 <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadPhoto(event)">
+<input type="file" id="tmStoryVideoInput" class="hidden" accept="video/mp4,video/webm,video/quicktime,image/*">
 
 <div id="chatPage" class="hidden">
  <div class="chathead">
@@ -275,7 +308,41 @@ body:not(.light) .msg{background:#203649}
  </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<div id="tmCircleLoader" class="tm-circle-overlay hidden">
+ <div class="tm-circle-box">
+  <svg class="tm-circle-svg" viewBox="0 0 76 76">
+   <circle class="tm-circle-track" cx="38" cy="38" r="32"></circle>
+   <circle id="tmCircleFg" class="tm-circle-fill" cx="38" cy="38" r="32" stroke-dasharray="201.06" stroke-dashoffset="201.06"></circle>
+  </svg>
+  <span id="tmCirclePct" class="tm-circle-pct">0%</span>
+ </div>
+ <div id="tmCircleLabel" class="tm-circle-text">Yuklanmoqda...</div>
+</div>
+
+<div id="tmStoryViewer" class="tm-story-viewer hidden">
+ <div>
+  <div id="tmStoryBars" class="tm-story-bars"></div>
+  <div class="tm-story-top">
+   <div class="tm-story-user">
+    <div id="tmStoryAvatar" class="avatar" style="width:38px;height:38px;font-size:15px">S</div>
+    <div><b id="tmStoryAuthor">Story</b><div id="tmStoryTime" style="font-size:12px;opacity:.75"></div></div>
+   </div>
+   <button type="button" class="secondary" onclick="closeStoryViewer()" style="padding:8px 12px">✕</button>
+  </div>
+ </div>
+ <div id="tmStoryMedia" class="tm-story-media"></div>
+ <div id="tmStoryCap" class="tm-story-cap"></div>
+</div>
+
+<div id="tmSettingSubpage" class="tm-sub-panel hidden">
+ <div class="tm-sub-head">
+  <button type="button" class="secondary" onclick="closeSettingSubpage()" style="padding:8px 12px">←</button>
+  <h3 id="tmSubTitle" style="margin:0;font-size:18px">Sozlama</h3>
+ </div>
+ <div id="tmSubContent" class="tm-sub-body"></div>
+   </div>
+
+ <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -284,16 +351,23 @@ body:not(.light) .msg{background:#203649}
 <script>
 "use strict";
 
+function hideSplashNow(){
+ var splash=document.getElementById("splash");
+ if(splash)splash.classList.add("hidden");
+}
+
 setTimeout(function(){
  var splash=document.getElementById("splash");
  if(splash&&!splash.classList.contains("hidden")){
   splash.classList.add("hidden");
   document.getElementById("authPage").classList.remove("hidden");
  }
-},4000);
+},3000);
 
 if(typeof firebase==="undefined"){
- document.getElementById("splash").innerHTML='<div class="empty">Sahifa to‘liq yuklanmadi. Internetga ulanib, bir marta qayta oching.</div>';
+ hideSplashNow();
+ document.getElementById("authPage").classList.remove("hidden");
+ document.getElementById("status").textContent="Sahifa to‘liq yuklanmadi. Internetga ulanib, bir marta qayta oching.";
  throw new Error("Firebase yuklanmadi");
 }
 
@@ -513,197 +587,7 @@ async function saveUserProfile(user,name){
  await withTimeout(db.collection("users").doc(user.uid).set(profile,{merge:true}),15000,"Profilni saqlash");
  return profile;
 }
- async function register(){
- if(authBusy)return;
- var email=document.getElementById("email").value.trim();
- var password=document.getElementById("password").value;
- if(!email||password.length<6){
-  setStatus("status","Email kiriting. Parol kamida 6 ta belgi bo‘lsin.");
-  return;
- }
- setAuthBusy(true);
- setStatus("status","Account yaratilmoqda...");
- try{
-  await persistenceReady;
-  var result=await withTimeout(auth.createUserWithEmailAndPassword(email,password),20000,"Account yaratish");
-  var user=result.user;
-  var name=email.split("@")[0];
-  setStatus("status","Account yaratildi. Profil saqlanmoqda...");
-  try{
-   await saveUserProfile(user,name);
-   myProfile={uid:user.uid,email:user.email,name:name,photoURL:""};
-   cacheSet("profile_"+user.uid,myProfile);
-   setStatus("status","Account muvaffaqiyatli yaratildi!");
-  }catch(profileError){
-   console.error("PROFILE SAVE ERROR:",profileError);
-   setStatus("status","Account yaratildi, lekin profil saqlanmadi: "+errorMessage(profileError));
-   setStatus("homeStatus","Profil saqlash xatosi: "+errorMessage(profileError));
-  }
- }catch(e){
-  console.error("REGISTER ERROR:",e);
-  if(auth.currentUser){
-   setStatus("homeStatus","Account yaratishdagi xatolik: "+errorMessage(e));
-  }else{
-   setStatus("status",errorMessage(e));
-  }
- }finally{
-  setAuthBusy(false);
- }
-}
 
-async function login(){
- if(authBusy)return;
- var email=document.getElementById("email").value.trim();
- var password=document.getElementById("password").value;
- if(!email||!password){
-  setStatus("status","Email va parolni kiriting.");
-  return;
- }
- setAuthBusy(true);
- setStatus("status","Akkauntga kirilmoqda...");
- try{
-  await persistenceReady;
-  await withTimeout(auth.signInWithEmailAndPassword(email,password),20000,"Login");
-  setStatus("status","Kirish muvaffaqiyatli!");
- }catch(e){
-  console.error("LOGIN ERROR:",e);
-  setStatus("status",errorMessage(e));
- }finally{
-  setAuthBusy(false);
- }
-}
-
-auth.onAuthStateChanged(async function(user){
- var version=++authStateVersion;
- currentUser=user;
- stopChatListListeners();
- if(unsubscribeMessages){unsubscribeMessages();unsubscribeMessages=null;}
- activeChat=null;
-
- document.getElementById("splash").classList.add("hidden");
- document.getElementById("aboutWrap").classList.toggle("hidden",!!user);
- document.getElementById("authPage").classList.toggle("hidden",!!user);
- document.getElementById("homePage").classList.toggle("hidden",!user);
- document.getElementById("chatPage").classList.add("hidden");
-
- if(!user){
-  myProfile={};allUsers=[];latestChats={};
-  setStatus("homeStatus","");
-  return;
- }
-
- setStatus("homeStatus",navigator.onLine?"Profil yuklanmoqda...":"");
- try{
-  await loadMyProfile();
-  if(version!==authStateVersion)return;
-  await loadUsers();
-  if(version!==authStateVersion)return;
-  startChatListListeners();
-  setStatus("homeStatus","");
- }catch(e){
-  console.error("USER LOAD ERROR:",e);
-  if(version===authStateVersion){
-   setStatus("homeStatus","Ma’lumot yuklanmadi: "+errorMessage(e));
-  }
- }
-});
-
-async function loadMyProfile(){
- if(!currentUser)return;
- var cached=cacheGet("profile_"+currentUser.uid,null);
- if(cached){
-  myProfile=cached;
-  updateProfileDisplays();
-  if(!navigator.onLine)return;
- }
- var ref=db.collection("users").doc(currentUser.uid);
- var doc;
- try{
-  doc=await withTimeout(ref.get(),15000,"Profilni yuklash");
- }catch(e){
-  if(cached)return;
-  throw e;
- }
- if(!doc.exists){
-  var name=(currentUser.email||"User").split("@")[0];
-  await saveUserProfile(currentUser,name);
-  myProfile={uid:currentUser.uid,email:currentUser.email||"",name:name,photoURL:""};
- }else{
-  var d=doc.data()||{};
-  myProfile={uid:currentUser.uid,email:d.email||currentUser.email||"",name:d.name||"",photoURL:d.photoURL||""};
- }
- saveProfileCache();
- updateProfileDisplays();
-}
-
-function openProfileMenu(){
- if(!currentUser)return;
- updateProfileDisplays();
- document.getElementById("profileOverlay").classList.remove("hidden");
-}
-function closeProfileMenu(){document.getElementById("profileOverlay").classList.add("hidden");}
-function overlayClose(event){if(event.target.id==="profileOverlay")closeProfileMenu();}
-
-function updateProfileDisplays(){
- if(!currentUser)return;
- var name=myProfile.name||(currentUser.email||"User").split("@")[0];
- var photo=myProfile.photoURL||"";
- document.getElementById("menuName").textContent=name;
- document.getElementById("menuEmail").textContent=currentUser.email||"";
- showAvatar("menuAvatar",name,photo);
- showAvatar("editAvatar",name,photo);
-}
-
-function openEditProfile(){
- closeProfileMenu();
- document.getElementById("newName").value=myProfile.name||"";
- setStatus("profileStatus","");
- updateProfileDisplays();
- document.getElementById("editOverlay").classList.remove("hidden");
-}
-function closeEditProfile(){document.getElementById("editOverlay").classList.add("hidden");}
-function editOverlayClose(event){if(event.target.id==="editOverlay")closeEditProfile();}
-
-async function updateProfile(){
- if(!currentUser)return;
- var name=document.getElementById("newName").value.trim();
- if(name.length<2){
-  setStatus("profileStatus","Ism kamida 2 ta belgi bo‘lsin.");
-  return;
- }
- var button=document.querySelector("#editOverlay .edit-actions button");
- button.disabled=true;
- setStatus("profileStatus","Saqlanmoqda...");
- try{
-  await withTimeout(db.collection("users").doc(currentUser.uid).set({name:name},{merge:true}),15000,"Ismni saqlash");
-  myProfile.name=name;
-  saveProfileCache();
-  updateProfileDisplays();
-  await loadUsers();
-  setStatus("profileStatus","Ism muvaffaqiyatli o‘zgartirildi!");
- }catch(e){
-  console.error(e);
-  setStatus("profileStatus","Xatolik: "+errorMessage(e));
- }finally{
-  button.disabled=false;
- }
-}
-
-function choosePhoto(){if(!currentUser)return;document.getElementById("photoInput").click();}
-
-async function uploadPhoto(event){
- if(!currentUser)return;
- var file=event.target.files[0];
- if(!file)return;
- if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
-  setStatus("profileStatus","Faqat JPG, PNG yoki WEBP rasm tanlang.");
-  event.target.value="";
-  return;
- }
- setStatus("profileStatus","Rasm yuklanmoqda...");
- try{
-  var formData=new FormData();
-  formData.append("file",file);
 async function register(){
  if(authBusy)return;
  var email=document.getElementById("email").value.trim();
@@ -771,8 +655,7 @@ auth.onAuthStateChanged(async function(user){
  if(unsubscribeMessages){unsubscribeMessages();unsubscribeMessages=null;}
  activeChat=null;
 
- var splashEl=document.getElementById("splash");
- if(splashEl)splashEl.classList.add("hidden");
+ hideSplashNow();
  document.getElementById("aboutWrap").classList.toggle("hidden",!!user);
  document.getElementById("authPage").classList.toggle("hidden",!!user);
  document.getElementById("homePage").classList.toggle("hidden",!user);
@@ -925,6 +808,7 @@ function openSettings(){
 }
 function closeSettings(){document.getElementById("settingsOverlay").classList.add("hidden");}
 function settingsOverlayClose(event){if(event.target.id==="settingsOverlay")closeSettings();}
+
 async function loadUsers(){
  if(!currentUser)return;
  var box=document.getElementById("users");
@@ -1076,7 +960,7 @@ function renderChatList(){
   var message=item.message||{};
   var row=document.createElement("div");
   row.className="chat-row";
-  var avatar=document.createElement("div");
+    var avatar=document.createElement("div");
   avatar.className="avatar";
   if(data.photoURL){
    var img=document.createElement("img");
@@ -1135,7 +1019,7 @@ function sendMessage(){
  }
 }
 
-function renderMessages(list){
+ function renderMessages(list){
  var messagesBox=document.getElementById("messages");
  messagesBox.innerHTML="";
  if(!list.length){
@@ -1210,82 +1094,8 @@ async function logout(){
   console.error(e);
   alert("Chiqishda xatolik: "+errorMessage(e));
  }
- }
- <style>
-.tm-circle-overlay{position:fixed;inset:0;z-index:25;background:rgba(7,16,26,.65);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
-.tm-circle-box{position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center;background:rgba(20,37,54,.92);border-radius:50%;box-shadow:0 8px 28px rgba(0,0,0,.45)}
-.tm-circle-svg{width:76px;height:76px;transform:rotate(-90deg)}
-.tm-circle-track{fill:none;stroke:rgba(255,255,255,.2);stroke-width:4.5}
-.tm-circle-fill{fill:none;stroke:#38bdf8;stroke-width:4.5;stroke-linecap:round;transition:stroke-dashoffset .12s linear}
-.tm-circle-pct{position:absolute;font-size:14px;font-weight:700;color:#fff}
-.tm-circle-text{background:rgba(20,37,54,.92);color:#fff;padding:6px 14px;border-radius:14px;font-size:13px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
 
-.tm-story-strip{display:flex;gap:12px;padding:8px 14px 10px;overflow-x:auto;border-bottom:1px solid var(--border)}
-.tm-story-item{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:66px;cursor:pointer;flex-shrink:0}
-.tm-story-ring{width:62px;height:62px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,#2bd9a9,#2b95f0);display:flex;align-items:center;justify-content:center}
-.tm-story-ring.add{background:var(--btn2);border:1.5px dashed var(--accent)}
-.tm-story-inner{width:100%;height:100%;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:22px;font-weight:700;color:var(--accent)}
-.tm-story-inner img,.tm-story-inner video{width:100%;height:100%;object-fit:cover}
-.tm-story-name{font-size:12px;color:var(--text);max-width:68px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-
-.tm-story-viewer{position:fixed;inset:0;z-index:35;background:#050a10;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
-.tm-story-bars{display:flex;gap:5px;height:4px}
-.tm-story-bar{flex:1;background:rgba(255,255,255,.28);border-radius:4px;overflow:hidden}
-.tm-story-bar-fill{height:100%;width:0%;background:#fff;transition:width .1s linear}
-.tm-story-top{display:flex;align-items:center;justify-content:space-between;margin-top:10px;color:#fff}
-.tm-story-user{display:flex;align-items:center;gap:10px}
-.tm-story-media{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:12px 0}
-.tm-story-media video,.tm-story-media img{max-width:100%;max-height:100%;border-radius:14px;background:#000}
-.tm-story-cap{color:#fff;text-align:center;font-size:15px;padding-bottom:10px}
-
-.tm-sub-panel{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding-bottom:32px}
-.tm-sub-head{position:sticky;top:0;height:62px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 14px;z-index:2}
-.tm-sub-body{max-width:650px;margin:0 auto;padding:16px}
-.tm-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:var(--card);border:1px solid var(--card-border);border-radius:14px;margin-bottom:10px}
-.tm-opt b{display:block;font-size:15px}
-.tm-opt small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
-</style>
-
-<input type="file" id="tmStoryVideoInput" class="hidden" accept="video/mp4,video/webm,video/quicktime,image/*">
-
-<div id="tmCircleLoader" class="tm-circle-overlay hidden">
- <div class="tm-circle-box">
-  <svg class="tm-circle-svg" viewBox="0 0 76 76">
-   <circle class="tm-circle-track" cx="38" cy="38" r="32"></circle>
-   <circle id="tmCircleFg" class="tm-circle-fill" cx="38" cy="38" r="32" stroke-dasharray="201.06" stroke-dashoffset="201.06"></circle>
-  </svg>
-  <span id="tmCirclePct" class="tm-circle-pct">0%</span>
- </div>
- <div id="tmCircleLabel" class="tm-circle-text">Yuklanmoqda...</div>
-</div>
-
-<div id="tmStoryViewer" class="tm-story-viewer hidden">
- <div>
-  <div id="tmStoryBars" class="tm-story-bars"></div>
-  <div class="tm-story-top">
-   <div class="tm-story-user">
-    <div id="tmStoryAvatar" class="avatar" style="width:38px;height:38px;font-size:15px">S</div>
-    <div><b id="tmStoryAuthor">Story</b><div id="tmStoryTime" style="font-size:12px;opacity:.75"></div></div>
-   </div>
-   <button type="button" class="secondary" onclick="closeStoryViewer()" style="padding:8px 12px">✕</button>
-  </div>
- </div>
- <div id="tmStoryMedia" class="tm-story-media"></div>
- <div id="tmStoryCap" class="tm-story-cap"></div>
-</div>
-
-<div id="tmSettingSubpage" class="tm-sub-panel hidden">
- <div class="tm-sub-head">
-  <button type="button" class="secondary" onclick="closeSettingSubpage()" style="padding:8px 12px">←</button>
-  <h3 id="tmSubTitle" style="margin:0;font-size:18px">Sozlama</h3>
- </div>
- <div id="tmSubContent" class="tm-sub-body"></div>
-</div>
-
-<script>
-"use strict";
-
-// 1) Dumaloq progress loader (rasm, video, ovozli xabar jo'natishda o'rtada ko'rinadi)
 (function(){
  var CIRC = 2 * Math.PI * 32;
  var fg = document.getElementById("tmCircleFg");
@@ -1309,8 +1119,7 @@ async function logout(){
  };
 })();
 
-// 2) Video Story tizimi
-(function(){
+ (function(){
  var storiesData = [];
  var storyIdx = 0;
  var storyTimer = null;
@@ -1510,16 +1319,13 @@ async function logout(){
   xhr.send(fd);
  });
 
- document.addEventListener("DOMContentLoaded", function(){
-  setTimeout(function(){
-   renderStoryStrip();
-   listenStories();
-  }, 800);
- });
+ setTimeout(function(){
+  renderStoryStrip();
+  listenStories();
+ }, 600);
 })();
 
-// 3) 8 ta Sozlamalar menyusi (rasmdagi tartib bo'yicha)
-(function(){
+ (function(){
  var PREF_KEY = "tm_prefs_v1";
  function getPrefs(){ return cacheGet(PREF_KEY, { enterSend:true, autoPlayVid:true, lastSeen:true, notifSound:true, autoCache:true, folders:true, dataSaver:false }); }
  function setPref(k, v){ var p = getPrefs(); p[k] = v; cacheSet(PREF_KEY, p); }
@@ -1569,7 +1375,6 @@ async function logout(){
   document.getElementById("tmSubTitle").textContent = sec.title;
   var body = document.getElementById("tmSubContent");
   body.innerHTML = "";
-  var p = getPrefs();
 
   if(sec.id === "account"){
    body.innerHTML = '<div class="tm-opt"><div><b>Email</b><small>' + ((currentUser && currentUser.email) || "—") + '</small></div></div>' +
