@@ -41,10 +41,7 @@ style.textContent = `
 @media (prefers-reduced-motion:reduce){.rec-dot{animation:none}}
 #attachMenu{position:absolute;left:10px;bottom:82px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:6px;box-shadow:0 8px 24px #0006;z-index:6;min-width:190px}
 .attach-item{display:flex;align-items:center;gap:12px;width:100%;background:transparent;color:var(--text);font-weight:normal;font-size:15px;padding:12px 14px;text-align:left}
-#uploadBar{position:absolute;left:10px;right:10px;bottom:82px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:10px 12px;font-size:13px;z-index:6}
-#uploadName{overflow-wrap:anywhere}
-#uploadBar .bar{height:6px;background:var(--border2);border-radius:6px;margin-top:8px;overflow:hidden}
-#uploadFill{height:100%;width:0;background:var(--accent);transition:width .15s}
+#uploadBar{display:none!important}
 .msg.media{padding:6px}
 .msg.media .msgtime{padding:0 6px}
 .msg-img{display:block;width:240px;max-width:100%;border-radius:11px;cursor:pointer;background:#0003}
@@ -134,14 +131,17 @@ function updateSendButtons() {
 function hideAttachMenu() { $("attachMenu").classList.add("hidden"); }
 
 function showUpload(name, percent) {
- $("uploadBar").classList.remove("hidden");
- $("uploadName").textContent = name + " · " + percent + "%";
- $("uploadFill").style.width = percent + "%";
+ if (typeof window.setCircleUploadProgress === "function") {
+  window.setCircleUploadProgress(name, percent);
+ }
 }
 
-function hideUpload() { $("uploadBar").classList.add("hidden"); }
-
-// ---------- Cloudinary'ga yuklash ----------
+function hideUpload() {
+ if (typeof window.hideCircleUploadProgress === "function") {
+  window.hideCircleUploadProgress();
+ }
+}
+ // ---------- Cloudinary'ga yuklash ----------
 function uploadToCloudinary(file, onProgress) {
  return new Promise(function (resolve, reject) {
   var xhr = new XMLHttpRequest();
@@ -403,8 +403,6 @@ function openViewer(url) {
  $("viewer").classList.remove("hidden");
 }
 
-// Asosiy koddagi renderMessages o'rniga: yangi xabarlarni faqat qo'shadi,
-// shuning uchun ijro etilayotgan audio/video uzilib qolmaydi.
 window.renderMessages = function (list) {
  var box = $("messages");
 
@@ -438,7 +436,6 @@ window.renderMessages = function (list) {
  if (added && (nearBottom || lastMine)) box.scrollTop = box.scrollHeight;
 };
 
-// ---------- Asosiy funksiyalarni o'rash ----------
 var origOpenChat = window.openChat;
 window.openChat = function () {
  needReset = true;
@@ -477,7 +474,6 @@ if (typeof origRenderChatList === "function") {
  };
 }
 
-// ---------- Tugmalarni ulash ----------
 $("message").addEventListener("input", updateSendButtons);
 $("message").addEventListener("keydown", function (e) {
  if (e.key === "Enter") window.sendMessage();
