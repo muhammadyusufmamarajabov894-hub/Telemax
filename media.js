@@ -141,7 +141,8 @@ function hideUpload() {
   window.hideCircleUploadProgress();
  }
 }
- // ---------- Cloudinary'ga yuklash ----------
+
+// ---------- Cloudinary'ga yuklash ----------
 function uploadToCloudinary(file, onProgress) {
  return new Promise(function (resolve, reject) {
   var xhr = new XMLHttpRequest();
@@ -217,9 +218,9 @@ function handlePicked(event) {
  var file = event.target.files && event.target.files[0];
  event.target.value = "";
  if (file) sendMedia(file, classify(file));
-}
+ }
 
-// ---------- Ovozli xabar ----------
+ // ---------- Ovozli xabar ----------
 function pickMime() {
  var list = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
  for (var i = 0; i < list.length; i++) {
@@ -301,7 +302,8 @@ function onRecorderStop() {
  var rec = recorder;
  recorder = null;
 
- var seconds = Math.round((Date.now() - recStartAt) / 1000);
+ var seconds = Math.round((Date.now() - recStartAt
+     recStartAt) / 1000);
  var type = (rec && rec.mimeType) || "audio/webm";
  var blob = new Blob(recChunks, { type: type });
  recChunks = [];
@@ -512,3 +514,4 @@ $("viewer").addEventListener("click", function () {
 updateSendButtons();
 console.log("TELEMAX media.js loaded successfully");
 })();
+                                    
