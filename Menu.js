@@ -17,6 +17,7 @@ function $(id) { return document.getElementById(id); }
 var css = document.createElement("style");
 css.textContent = `
 #messages .msg{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;position:relative}
+#messages .msg img{-webkit-touch-callout:none;-webkit-user-drag:none;user-select:none}
 .msg.sel{outline:2px solid var(--accent)}
 .reply-q{font-size:12px;opacity:.85;border-left:3px solid var(--accent);padding:2px 8px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .fwd-tag{display:block;font-size:11px;opacity:.8;margin-bottom:4px}
@@ -160,12 +161,13 @@ box.addEventListener("touchmove", function (e) {
 });
 
 // Kompyuterda: o'ng tugma. Telefonda brauzer menyusini o'chiradi.
-box.addEventListener("contextmenu", function (e) {
- var el = e.target.closest(".msg");
+document.addEventListener("contextmenu", function (e) {
+ var el = e.target.closest && e.target.closest("#messages .msg");
  if (!el) return;
  e.preventDefault();
- openMenu(el, e.clientX, e.clientY);
-});
+ e.stopPropagation();
+ if (menu.style.display !== "block") openMenu(el, e.clientX, e.clientY);
+}, true);
 
 bg.addEventListener("click", closeMenu);
 
