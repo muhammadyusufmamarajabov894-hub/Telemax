@@ -9,21 +9,36 @@
 <body>
   <h2>Telemax AI</h2>
 
-  <input id="question" placeholder="Savolingizni yozing..." />
+  <input
+    id="question"
+    type="text"
+    placeholder="Savolingizni yozing..."
+  />
   <button id="send">Yuborish</button>
 
   <div id="answer">AI javobi shu yerda chiqadi.</div>
 
   <script type="module">
+    // Firebase
     import { initializeApp } from
       "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 
+    // Firebase App Check
+    import {
+      initializeAppCheck,
+      ReCaptchaEnterpriseProvider
+    } from
+      "https://www.gstatic.com/firebasejs/13.4.0/firebase-app-check.js";
+
+    // Firebase AI Logic
     import {
       getAI,
       getGenerativeModel,
       GoogleAIBackend
-    } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-ai.js";
+    } from
+      "https://www.gstatic.com/firebasejs/13.4.0/firebase-ai.js";
 
+    // Firebase konfiguratsiyasi
     const firebaseConfig = {
       apiKey: "AIzaSyBpUaZtGdBF43IgYy3BJL9TcD5zzoDCdqM",
       authDomain: "telemax-b6a9a.firebaseapp.com",
@@ -35,14 +50,18 @@
       measurementId: "G-K2DDBNPQBG"
     };
 
+    // Firebase ishga tushirish
     const app = initializeApp(firebaseConfig);
-    const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaEnterpriseProvider(
-    "6LeupTUuAAAAAJeL6nEKNlhiUAvDxfBUdvZHSVqs"
-  ),
-  isTokenAutoRefreshEnabled: true
-});
 
+    // App Check ishga tushirish
+    const appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaEnterpriseProvider(
+        "6LeupTUuAAAAAJeL6nEKNlhiUAvDxfBUdvZHSVqs"
+      ),
+      isTokenAutoRefreshEnabled: true
+    });
+
+    // Gemini AI ulash
     const ai = getAI(app, {
       backend: new GoogleAIBackend()
     });
@@ -51,20 +70,38 @@
       model: "gemini-2.5-flash"
     });
 
-    document.getElementById("send").addEventListener("click", async () => {
-      const question = document.getElementById("question").value.trim();
-      const answer = document.getElementById("answer");
+    // Savol yuborish
+    const sendButton = document.getElementById("send");
+    const questionInput = document.getElementById("question");
+    const answerBox = document.getElementById("answer");
 
-      if (!question) return;
+    async function sendQuestion() {
+      const question = questionInput.value.trim();
 
-      answer.textContent = "Telemax AI javob tayyorlamoqda...";
+      if (!question) {
+        answerBox.textContent = "Iltimos, savol yozing.";
+        return;
+      }
+
+      sendButton.disabled = true;
+      answerBox.textContent = "Telemax AI javob tayyorlamoqda...";
 
       try {
         const result = await model.generateContent(question);
-        answer.textContent = result.response.text();
+        answerBox.textContent = result.response.text();
       } catch (error) {
-        console.error(error);
-        answer.textContent = "Xatolik: " + error.message;
+        console.error("Telemax AI xatosi:", error);
+        answerBox.textContent = "Xatolik: " + error.message;
+      } finally {
+        sendButton.disabled = false;
+      }
+    }
+
+    sendButton.addEventListener("click", sendQuestion);
+
+    questionInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        sendQuestion();
       }
     });
   </script>
