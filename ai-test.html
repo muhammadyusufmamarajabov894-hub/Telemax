@@ -2,108 +2,203 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Telemax AI Test</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telemax AI</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#101827;
+  color:white;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+header{
+  padding:16px;
+  background:#172338;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header h2{margin:0;color:#62a5ff}
+button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px}
+#newChat{background:#263b59;color:white}
+#messages{
+  flex:1;
+  overflow-y:auto;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.message{
+  max-width:85%;
+  padding:13px;
+  border-radius:14px;
+  line-height:1.5;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.user{
+  align-self:flex-end;
+  background:#2469bd;
+}
+.ai{
+  align-self:flex-start;
+  background:#263449;
+}
+footer{
+  padding:12px;
+  display:flex;
+  gap:8px;
+  background:#172338;
+}
+input{
+  flex:1;
+  min-width:0;
+  padding:13px;
+  border-radius:10px;
+  border:1px solid #45536a;
+  background:#263449;
+  color:white;
+  outline:none;
+}
+#send{
+  background:#287de0;
+  color:white;
+  font-weight:bold;
+}
+#send:disabled{opacity:.5}
+</style>
 </head>
+
 <body>
+
+<header>
   <h2>Telemax AI</h2>
+  <button id="newChat">+ Yangi chat</button>
+</header>
 
-  <input
-    id="question"
-    type="text"
-    placeholder="Savolingizni yozing..."
-  />
+<div id="messages">
+  <div class="message ai">
+    Salom! Men Telemax AI. Sizga qanday yordam bera olaman?
+  </div>
+</div>
+
+<footer>
+  <input id="question" placeholder="Xabar yozing...">
   <button id="send">Yuborish</button>
+</footer>
 
-  <div id="answer">AI javobi shu yerda chiqadi.</div>
+<script type="module">
 
-  <script type="module">
-    // Firebase
-    import { initializeApp } from
-      "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+import { initializeApp } from
+"https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 
-    // Firebase App Check
-    import {
-      initializeAppCheck,
-      ReCaptchaEnterpriseProvider
-    } from
-      "https://www.gstatic.com/firebasejs/13.4.0/firebase-app-check.js";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider
+} from
+"https://www.gstatic.com/firebasejs/13.4.0/firebase-app-check.js";
 
-    // Firebase AI Logic
-    import {
-      getAI,
-      getGenerativeModel,
-      GoogleAIBackend
-    } from
-      "https://www.gstatic.com/firebasejs/13.4.0/firebase-ai.js";
+import {
+  getAI,
+  getGenerativeModel,
+  GoogleAIBackend
+} from
+"https://www.gstatic.com/firebasejs/13.4.0/firebase-ai.js";
 
-    // Firebase konfiguratsiyasi
-    const firebaseConfig = {
-      apiKey: "AIzaSyBpUaZtGdBF43IgYy3BJL9TcD5zzoDCdqM",
-      authDomain: "telemax-b6a9a.firebaseapp.com",
-      databaseURL: "https://telemax-b6a9a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "telemax-b6a9a",
-      storageBucket: "telemax-b6a9a.firebasestorage.app",
-      messagingSenderId: "746634996399",
-      appId: "1:746634996399:web:c2959fc11f6760d4cb425a",
-      measurementId: "G-K2DDBNPQBG"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyBpUaZtGdBF43IgYy3BJL9TcD5zzoDCdqM",
+  authDomain: "telemax-b6a9a.firebaseapp.com",
+  databaseURL: "https://telemax-b6a9a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "telemax-b6a9a",
+  storageBucket: "telemax-b6a9a.firebasestorage.app",
+  messagingSenderId: "746634996399",
+  appId: "1:746634996399:web:c2959fc11f6760d4cb425a",
+  measurementId: "G-K2DDBNPQBG"
+};
 
-    // Firebase ishga tushirish
-    const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
-    // App Check ishga tushirish
-    const appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaEnterpriseProvider(
-        "6LeupTUuAAAAAJeL6nEKNlhiUAvDxfBUdvZHSVqs"
-      ),
-      isTokenAutoRefreshEnabled: true
-    });
+initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider(
+    "6LeupTUuAAAAAJeL6nEKNlhiUAvDxfBUdvZHSVqs"
+  ),
+  isTokenAutoRefreshEnabled: true
+});
 
-    // Gemini AI ulash
-    const ai = getAI(app, {
-      backend: new GoogleAIBackend()
-    });
+const ai = getAI(app, {
+  backend: new GoogleAIBackend()
+});
 
-    const model = getGenerativeModel(ai, {
-      model: "gemini-3.8-flash"
-    });
+const model = getGenerativeModel(ai, {
+  model: "gemini-3.8-flash",
+  systemInstruction:
+    "You are Telemax AI, a helpful and intelligent assistant. Answer clearly and naturally. Respond in the language used by the user."
+});
 
-    // Savol yuborish
-    const sendButton = document.getElementById("send");
-    const questionInput = document.getElementById("question");
-    const answerBox = document.getElementById("answer");
+let chat = model.startChat({
+  history: []
+});
 
-    async function sendQuestion() {
-      const question = questionInput.value.trim();
+const messages = document.getElementById("messages");
+const input = document.getElementById("question");
+const sendButton = document.getElementById("send");
 
-      if (!question) {
-        answerBox.textContent = "Iltimos, savol yozing.";
-        return;
-      }
+function addMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = "message " + type;
+  div.textContent = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return div;
+}
 
-      sendButton.disabled = true;
-      answerBox.textContent = "Telemax AI javob tayyorlamoqda...";
+async function sendMessage() {
+  const question = input.value.trim();
+  if (!question || sendButton.disabled) return;
 
-      try {
-        const result = await model.generateContent(question);
-        answerBox.textContent = result.response.text();
-      } catch (error) {
-        console.error("Telemax AI xatosi:", error);
-        answerBox.textContent = "Xatolik: " + error.message;
-      } finally {
-        sendButton.disabled = false;
-      }
-    }
+  addMessage(question, "user");
+  input.value = "";
 
-    sendButton.addEventListener("click", sendQuestion);
+  sendButton.disabled = true;
+  const loading = addMessage("Telemax AI javob tayyorlamoqda...", "ai");
 
-    questionInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        sendQuestion();
-      }
-    });
-  </script>
+  try {
+    const result = await chat.sendMessage(question);
+    loading.textContent = result.response.text() ||
+      "Javob olinmadi.";
+  } catch (error) {
+    console.error(error);
+    loading.textContent = "Xatolik: " + error.message;
+  } finally {
+    sendButton.disabled = false;
+    input.focus();
+    messages.scrollTop = messages.scrollHeight;
+  }
+}
+
+sendButton.addEventListener("click", sendMessage);
+
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter") sendMessage();
+});
+
+document.getElementById("newChat").addEventListener("click", () => {
+  chat = model.startChat({ history: [] });
+  messages.innerHTML = "";
+
+  addMessage(
+    "Yangi suhbat boshlandi. Sizga qanday yordam beray?",
+    "ai"
+  );
+});
+
+</script>
 </body>
 </html>
