@@ -1009,11 +1009,9 @@ function sendMessage(){
  input.focus();
  try{
   var messageRef=rtdb.ref("chats/"+chatId+"/messages").push();
-  messageRef.set({
-   text:text,
-   senderId:currentUser.uid,
-   createdAt:Date.now()
-  }).catch(function(e){
+  var payload={text:text,senderId:currentUser.uid,createdAt:Date.now()};
+  if(window.tmReply){payload.replyTo=window.tmReply;if(window.tmClearReply)window.tmClearReply();}
+  messageRef.set(payload).catch(function(e){
    console.error(e);
    alert("Xabar yuborilmadi: "+errorMessage(e));
    if(activeChat===friendId&&!input.value)input.value=text;
@@ -1070,7 +1068,7 @@ function openChat(friendId,name,photoURL){
  var handler=messagesRef.on("value",function(snapshot){
   if(activeChat!==friendId)return;
   var list=[];
-  snapshot.forEach(function(child){list.push(child.val());});
+    snapshot.forEach(function(child){var v=child.val();v._key=child.key;list.push(v);});
   cacheSet("msgs_"+chatId,list.slice(-100));
   renderMessages(list);
  },function(error){
@@ -1426,6 +1424,8 @@ console.log("TELEMAX JavaScript loaded successfully");
 </script>
 <script src="media.js"></script>
 <script src="design.js"></script>
+ <script src="render.js"></script>
+<script src="menu.js"></script>
  <div hidden><span id="stEmail"></span><span id="pfName"></span><span id="pfEmail"></span><span id="cntAll"></span><span id="cntUnread"></span><span id="navBadge"></span></div>
 </body>
 </html>
