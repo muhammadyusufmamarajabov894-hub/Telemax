@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telemax AI Test</title>
+</head>
+<body>
+  <h2>Telemax AI</h2>
+
+  <input id="question" placeholder="Savolingizni yozing..." />
+  <button id="send">Yuborish</button>
+
+  <div id="answer">AI javobi shu yerda chiqadi.</div>
+
+  <script type="module">
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+
+    import {
+      getAI,
+      getGenerativeModel,
+      GoogleAIBackend
+    } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-ai.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBpUaZtGdBF43IgYy3BJL9TcD5zzoDCdqM",
+      authDomain: "telemax-b6a9a.firebaseapp.com",
+      databaseURL: "https://telemax-b6a9a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "telemax-b6a9a",
+      storageBucket: "telemax-b6a9a.firebasestorage.app",
+      messagingSenderId: "746634996399",
+      appId: "1:746634996399:web:c2959fc11f6760d4cb425a",
+      measurementId: "G-K2DDBNPQBG"
+    };
+
+    const app = initializeApp(firebaseConfig);
+
+    const ai = getAI(app, {
+      backend: new GoogleAIBackend()
+    });
+
+    const model = getGenerativeModel(ai, {
+      model: "gemini-2.5-flash"
+    });
+
+    document.getElementById("send").addEventListener("click", async () => {
+      const question = document.getElementById("question").value.trim();
+      const answer = document.getElementById("answer");
+
+      if (!question) return;
+
+      answer.textContent = "Telemax AI javob tayyorlamoqda...";
+
+      try {
+        const result = await model.generateContent(question);
+        answer.textContent = result.response.text();
+      } catch (error) {
+        console.error(error);
+        answer.textContent = "Xatolik: " + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
